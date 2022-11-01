@@ -4,7 +4,7 @@ local TweenService = game:GetService('TweenService')
 local RunService = game:GetService('RunService')
 local LocalPlayer = game:GetService('Players').LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-local CoreGui = LocalPlayer.PlayerGui
+local CoreGui = game:GetService('CoreGui')
 
 local Library = {}
 
