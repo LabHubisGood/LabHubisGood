@@ -4,7 +4,7 @@ local TweenService = game:GetService('TweenService')
 local RunService = game:GetService('RunService')
 local LocalPlayer = game:GetService('Players').LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-local CoreGui = game:GetService('CoreGui')
+local CoreGui = game:GetService("CoreGui")
 
 local Library = {}
 
@@ -32,6 +32,7 @@ local Library = {
 	BackgroundColor = Color3.fromRGB(20, 20, 20),
 	AccentColor = Color3.fromRGB(64, 188, 243),
 	OutlineColor = Color3.fromRGB(50, 50, 50),
+	InlineColor = Color3.fromRGB(50, 50, 50),
 	Black = Color3.new(0, 0, 0),
 }
 
@@ -250,7 +251,7 @@ do
 
 		local PickerFrameInner = Library:Create('Frame', {
 			BackgroundColor3 = Library.BackgroundColor;
-			BorderColor3 = Library.OutlineColor;
+			BorderColor3 = Library.InlineColor;
 			BorderMode = Enum.BorderMode.Inset;
 			Size = UDim2.new(1, 0, 1, 0);
 			ZIndex = 16;
@@ -925,10 +926,10 @@ do
 			Color = ColorSequence.new({
 				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
 				ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212))
-			});
-			Rotation = 90;
-			Parent = ButtonInner;
-		});
+			}),
+			Rotation = 90,
+			Parent = ButtonInner
+		})
 
 		local ButtonLabel = Library:CreateLabel({
 			Size = UDim2.new(1, 0, 1, 0);
@@ -976,20 +977,20 @@ do
 		Groupbox:AddBlank(1);
 
 		local TextBoxOuter = Library:Create('Frame', {
-			BorderColor3 = Color3.new(0, 0, 0);
-			Size = UDim2.new(1, -4, 0, 20);
-			ZIndex = 5;
-			Parent = Container;
-		});
+			BorderColor3 = Color3.new(0, 0, 0),
+			Size = UDim2.new(1, -4, 0, 20),
+			ZIndex = 5,
+			Parent = Container
+		})
 
 		local TextBoxInner = Library:Create('Frame', {
-			BackgroundColor3 = Library.MainColor;
-			BorderColor3 = Library.OutlineColor;
-			BorderMode = Enum.BorderMode.Inset;
-			Size = UDim2.new(1, 0, 1, 0);
-			ZIndex = 6;
-			Parent = TextBoxOuter;
-		});
+			BackgroundColor3 = Library.MainColor,
+			BorderColor3 = Library.OutlineColor,
+			BorderMode = Enum.BorderMode.Inset,
+			Size = UDim2.new(1, 0, 1, 0),
+			ZIndex = 6,
+			Parent = TextBoxOuter
+		})
 
 		Library:AddToRegistry(TextBoxInner, {
 			BackgroundColor3 = 'MainColor';
@@ -1473,12 +1474,12 @@ do
 		});
 
 		local Scrolling = Library:Create('ScrollingFrame', {
-			BackgroundTransparency = 1;
-			CanvasSize = UDim2.new(0, 0, 0, 0);
-			Size = UDim2.new(1, 0, 1, 0);
-			ZIndex = 21;
-			Parent = ListInner;
-		});
+			BackgroundTransparency = 1,
+			CanvasSize = UDim2.new(0, 0, 0, 0),
+			Size = UDim2.new(1, 0, 1, 0),
+			ZIndex = 21,
+			Parent = ListInner
+		})
 
 		Library:Create('UIListLayout', {
 			Padding = UDim.new(0, 0);
@@ -1765,14 +1766,20 @@ function Library.CreateWindow(info)
 		BorderColor3 = 'AccentColor'
 	})
 	if info and info.Title and info.Title.Icon then
-		local IconFrame = Library:Create('Frame', {
-			BackgroundColor3 = Library.MainColor,
-			BorderColor3 = Library.OutlineColor,
-			BorderMode = Enum.BorderMode.Inset,
+		local IconOuter = Library:Create('Frame', {
+			BorderColor3 = Color3.new(0, 0, 0),
 			Position = UDim2.new(0, 10, 0, 10),
 			Size = UDim2.new(0, 28, 0, 28),
 			ZIndex = 1,
 			Parent = Inner
+		})
+		local IconFrame = Library:Create('Frame', {
+			BackgroundColor3 = Library.MainColor,
+			BorderColor3 = Library.OutlineColor,
+			BorderMode = Enum.BorderMode.Inset,
+			Size = UDim2.new(1, 0, 1, 0),
+			ZIndex = 1,
+			Parent = IconOuter
 		})
 		local IconLabel = Library:Create('ImageLabel', {
 			BackgroundTransparency = 1,
@@ -1790,14 +1797,20 @@ function Library.CreateWindow(info)
 			Parent = IconFrame
 		})
 	end
-	local TitleFrame = Library:Create('Frame', {
-		BackgroundColor3 = Library.MainColor,
-		BorderColor3 = Library.OutlineColor,
-		BorderMode = Enum.BorderMode.Inset,
+	local TitleOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0),
 		Position = info and info.Title and info.Title.Icon and UDim2.new(0, 43, 0, 10) or UDim2.new(0, 8, 0, 10),
 		Size = UDim2.new(0, 110, 0, 28),
 		ZIndex = 1,
 		Parent = Inner
+	})
+	local TitleFrame = Library:Create('Frame', {
+		BackgroundColor3 = Library.MainColor,
+		BorderColor3 = Library.OutlineColor,
+		BorderMode = Enum.BorderMode.Inset,
+		Size = UDim2.new(1, 0, 1, 0),
+		ZIndex = 1,
+		Parent = TitleOuter
 	})
 	local TitleLabel = Library:CreateLabel({
 		Size = UDim2.new(1, 0, 1, 0),
@@ -1816,14 +1829,20 @@ function Library.CreateWindow(info)
 		Parent = TitleFrame
 	})
 	if info and info.Category and info.Category.Name then
-		local CategoryFrame = Library:Create('Frame', {
-			BackgroundColor3 = Library.MainColor,
-			BorderColor3 = Library.OutlineColor,
-			BorderMode = Enum.BorderMode.Inset,
+		local CategoryOuter = Library:Create('Frame', {
+			BorderColor3 = Color3.new(0, 0, 0),
 			Position = info and info.Title and info.Title.Icon and UDim2.new(0, 161, 0, 10) or UDim2.new(0, 125, 0, 10),
 			Size = info and info.Title and info.Title.Icon and UDim2.new(0, 378, 0, 28) or UDim2.new(0, 411, 0, 28),
 			ZIndex = 1,
 			Parent = Inner
+		})
+		local CategoryFrame = Library:Create('Frame', {
+			BackgroundColor3 = Library.MainColor,
+			BorderColor3 = Library.OutlineColor,
+			BorderMode = Enum.BorderMode.Inset,
+			Size = UDim2.new(1,0,1,0),
+			ZIndex = 1,
+			Parent = CategoryOuter
 		})
 		local CategoryLabel = Library:CreateLabel({
 			Size = UDim2.new(1, 0, 1, 0),
@@ -1845,7 +1864,7 @@ function Library.CreateWindow(info)
 
 	local MainSectionOuter = Library:Create('Frame', {
 		BackgroundColor3 = Library.BackgroundColor,
-		BorderColor3 = Library.OutlineColor,
+		BorderColor3 = Color3.new(0, 0, 0),
 		Position = UDim2.new(0, 8, 0, 48),
 		Size = UDim2.new(1, -16, 0.96, -33),
 		ZIndex = 1,
@@ -1859,7 +1878,7 @@ function Library.CreateWindow(info)
 
 	local MainSectionInner = Library:Create('Frame', {
 		BackgroundColor3 = Library.BackgroundColor,
-		BorderColor3 = Color3.new(0, 0, 0),
+		BorderColor3 = Library.OutlineColor,
 		BorderMode = Enum.BorderMode.Inset,
 		Position = UDim2.new(0, 0, 0, 0),
 		Size = UDim2.new(1, 0, 1, 0),
@@ -1870,100 +1889,146 @@ function Library.CreateWindow(info)
 	Library:AddToRegistry(MainSectionInner, {
 		BackgroundColor3 = 'BackgroundColor'
 	})
-	
-	local ButtonLeft = Library:Create('Frame', {
-		BackgroundColor3 = Library.MainColor,
-		BorderColor3 = Library.OutlineColor,
+	local ButtonLeftOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0),
 		Position = UDim2.new(0, 9, 0, 5),
 		Size = UDim2.new(0, 28, 0, 28),
 		ZIndex = 1,
 		Parent = MainSectionInner
 	})
-	local Left = Library:Create('Frame', {
+	local ButtonLeft = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.OutlineColor,
+		BorderMode = Enum.BorderMode.Inset,
 		Size = UDim2.new(1, 0, 1, 0),
 		ZIndex = 1,
-		Parent = ButtonLeft
+		Parent = ButtonLeftOuter
 	})
 	local LeftLabel = Library:CreateLabel({
 		Size = UDim2.new(1, 0, 1, 0),
 		Text = '<',
 		ZIndex = 1,
-		Parent = Left
+		Parent = ButtonLeft
 	})
-	
-	local ButtonRight = Library:Create('Frame', {
-		BackgroundColor3 = Library.MainColor,
-		BorderColor3 = Library.OutlineColor,
+
+	local ButtonRightOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0),
 		Position = UDim2.new(0, 491, 0, 5),
 		Size = UDim2.new(0, 28, 0, 28),
 		ZIndex = 1,
 		Parent = MainSectionInner
 	})
-	local Right = Library:Create('Frame', {
+	local ButtonRight = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.OutlineColor,
+		BorderMode = Enum.BorderMode.Inset,
 		Size = UDim2.new(1, 0, 1, 0),
 		ZIndex = 1,
-		Parent = ButtonRight
+		Parent = ButtonRightOuter
 	})
-	local LeftLabel = Library:CreateLabel({
+	local RightLabel = Library:CreateLabel({
 		Size = UDim2.new(1, 0, 1, 0),
 		Text = '>',
 		ZIndex = 1,
-		Parent = Right
+		Parent = ButtonRight
 	})
-
 	local TabArea = Library:Create('Frame', {
 		BackgroundTransparency = 1,
-		Position = UDim2.new(0, 42, 0, 3),
-		Size = UDim2.new(0, 444, 0, 33),
+		Position = UDim2.new(0, 44, 0, 3),
+		Size = UDim2.new(0, 440, 0, 32),
 		ZIndex = 1,
 		Parent = MainSectionInner
+	})
+
+	local TabScrolling = Library:Create('ScrollingFrame', {
+		BackgroundTransparency = 1,
+		Size = UDim2.new(1, 0, 1, 0),
+		ZIndex = 1,
+		CanvasSize = UDim2.new(0, 0, 0, 0),
+		ScrollBarThickness = 0,
+		ClipsDescendants = true,
+		ScrollingEnabled = false,
+		Parent = TabArea
+	})
+
+	Library:Create('UIPadding', {
+		PaddingLeft = UDim.new(0,2),
+		Parent = TabScrolling
 	})
 
 	Library:Create('UIListLayout', {
 		Padding = UDim.new(0, 5),
 		FillDirection = Enum.FillDirection.Horizontal,
 		SortOrder = Enum.SortOrder.LayoutOrder,
-		Parent = TabArea
-	})
-	
-	Library:Create('UIPadding', {
-		PaddingLeft = UDim.new(0, 5),
-		PaddingRight = UDim.new(0, 5),
-		PaddingTop = UDim.new(0, 2),
-		Parent = TabArea
+		VerticalAlignment = Enum.VerticalAlignment.Center,
+		Parent = TabScrolling
 	})
 
+	local TabContainerOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0),
+		Position = UDim2.new(0, 8, 0, 42),
+		Size = UDim2.new(1, -16, .98, -38),
+		ZIndex = 1,
+		Parent = MainSectionInner
+	})
 	local TabContainer = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.OutlineColor,
-		Position = UDim2.new(0, 8, 0, 42),
-		Size = UDim2.new(1, -16, .98, -38),
-		ZIndex = 2,
-		Parent = MainSectionInner
+		BorderMode = Enum.BorderMode.Inset,
+		Size = UDim2.new(1, 0, 1, 0),
+		ZIndex = 1,
+		Parent = TabContainerOuter
 	})
 
 	Library:AddToRegistry(TabContainer, {
 		BackgroundColor3 = 'MainColor',
 		BorderColor3 = 'OutlineColor'
 	})
-	
-	function Window:AddTab(Name)
-		local Tab = {
-			Groupboxes = {};
-			Tabboxes = {};
-		};
 
+	local tabside = 0
+	LeftLabel.InputBegan:Connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseButton1 and tabside-110 >= 0 and not Library:MouseIsOverOpenedFrame() then
+			tabside -= 110
+			TweenService:Create(TabScrolling,TweenInfo.new(.1,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{CanvasPosition = Vector2.new(tabside,0)}):Play()
+		end
+	end)
+	RightLabel.InputBegan:Connect(function(Input)
+		if Input.UserInputType == Enum.UserInputType.MouseButton1 and tabside+110 <= (TabScrolling.CanvasSize.X.Offset-TabArea.Size.X.Offset) and not Library:MouseIsOverOpenedFrame() then
+			tabside += 110
+			TweenService:Create(TabScrolling,TweenInfo.new(.1,Enum.EasingStyle.Linear,Enum.EasingDirection.Out),{CanvasPosition = Vector2.new(tabside,0)}):Play()
+		end
+	end)
+
+	function Window:AddTab(Name,Info)
+		TabScrolling.CanvasSize += UDim2.new(0, 110, 0, 0)
+		local Tab = {
+			Groupboxes = {},
+			Tabboxes = {}
+		}
+
+		local TabButtonOuter = Library:Create('Frame', {
+			BorderColor3 = Color3.new(0, 0, 0),
+			Size = UDim2.new(0, 105, 0, 28),
+			ZIndex = 1,
+			Parent = TabScrolling
+		})
 		local TabButton = Library:Create('Frame', {
-			BackgroundColor3 = Library.BackgroundColor;
-			BorderColor3 = Library.OutlineColor;
-			Size = UDim2.new(0, 105, 0, 28);
-			ZIndex = 1;
-			Parent = TabArea;
-		});
+			BackgroundColor3 = Library.BackgroundColor,
+			BorderColor3 = Library.OutlineColor,
+			Size = UDim2.new(1, 0, 1, 0),
+			BorderMode = Enum.BorderMode.Inset,
+			ZIndex = 1,
+			Parent = TabButtonOuter
+		})
+
+		Library:Create('UIGradient', {
+			Color = ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+				ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212))
+			}),
+			Rotation = 90,
+			Parent = TabButton
+		})
 
 		Library:AddToRegistry(TabButton, {
 			BackgroundColor3 = 'BackgroundColor';
@@ -1977,70 +2042,98 @@ function Library.CreateWindow(info)
 			ZIndex = 1;
 			Parent = TabButton;
 		});
-		
+
 		local TabFrame = Library:Create('Frame', {
-			BackgroundTransparency = 1;
-			Position = UDim2.new(0, 0, 0, 0);
-			Size = UDim2.new(1, 0, 1, 0);
-			Visible = false;
-			ZIndex = 2;
-			Parent = TabContainer;
-		});
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, 0, 0, 0),
+			Size = UDim2.new(1, 0, 1, 0),
+			Visible = false,
+			ZIndex = 2,
+			Parent = TabContainer
+		})
 
-		local LeftSide = Library:Create('Frame', {
-			BackgroundTransparency = 1;
-			Position = UDim2.new(0, 8, 0, 8);
-			Size = UDim2.new(0.5, -12, 0, 507);
-			ZIndex = 2;
-			Parent = TabFrame;
-		});
+		local LeftSide = Library:Create('ScrollingFrame', {
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0, 8, 0, 8),
+			Size = UDim2.new(0.5, -12, 0, 470),
+			VerticalScrollBarInset = Enum.ScrollBarInset.Always,
+			ScrollBarThickness = 0,
+			ClipsDescendants = true,
+			ZIndex = 2,
+			Parent = TabFrame
+		})
 
-		local RightSide = Library:Create('Frame', {
-			BackgroundTransparency = 1;
-			Position = UDim2.new(0.5, 4, 0, 8);
-			Size = UDim2.new(0.5, -12, 0, 507);
-			ZIndex = 2;
-			Parent = TabFrame;
-		});
+		local RightSide = Library:Create('ScrollingFrame', {
+			BackgroundTransparency = 1,
+			Position = UDim2.new(0.5, 4, 0, 8),
+			Size = UDim2.new(0.5, -12, 0, 470),
+			VerticalScrollBarInset = Enum.ScrollBarInset.Always,
+			ScrollBarThickness = 0,
+			ClipsDescendants = true,
+			ZIndex = 2,
+			Parent = TabFrame
+		})
 
 		Library:Create('UIListLayout', {
-			Padding = UDim.new(0, 8);
-			FillDirection = Enum.FillDirection.Vertical;
-			SortOrder = Enum.SortOrder.LayoutOrder;
-			Parent = LeftSide;
-		});
+			Padding = UDim.new(0, 8),
+			FillDirection = Enum.FillDirection.Vertical,
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Parent = LeftSide
+		})
 
 		Library:Create('UIListLayout', {
-			Padding = UDim.new(0, 8);
-			FillDirection = Enum.FillDirection.Vertical;
-			SortOrder = Enum.SortOrder.LayoutOrder;
-			Parent = RightSide;
-		});
+			Padding = UDim.new(0, 8),
+			FillDirection = Enum.FillDirection.Vertical,
+			HorizontalAlignment = Enum.HorizontalAlignment.Center,
+			SortOrder = Enum.SortOrder.LayoutOrder,
+			Parent = RightSide
+		})
+
+		local function chargesizescrolling(scrolling)
+			local nun = 0
+			local SizeY = 0
+			for i,v in pairs(scrolling:GetChildren()) do
+				if v:IsA("Frame") then
+					nun += 1
+					SizeY += v.Size.Y.Offset
+				end
+			end
+			return SizeY+(nun*8)
+		end
+		RightSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(RightSide))
+		LeftSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(LeftSide))
+		RightSide.ChildAdded:Connect(function()
+			RightSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(RightSide))
+		end)
+		LeftSide.ChildAdded:Connect(function()
+			LeftSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(LeftSide))
+		end)
 
 		function Tab:ShowTab()
 			for _, Tab in next, Window.Tabs do
-				Tab:HideTab();
-			end;
+				Tab:HideTab()
+			end
 
-			TabButton.BackgroundColor3 = Library.MainColor;
-			TabFrame.Visible = true;
-		end;
+			TabButton.BackgroundColor3 = Library.MainColor
+			TabFrame.Visible = true
+		end
 
 		function Tab:HideTab()
-			TabButton.BackgroundColor3 = Library.BackgroundColor;
-			TabFrame.Visible = false;
-		end;
+			TabButton.BackgroundColor3 = Library.BackgroundColor
+			TabFrame.Visible = false
+		end
 
 		function Tab:AddGroupbox(Info)
-			local Groupbox = {};
+			local Groupbox = {}
 
 			local BoxOuter = Library:Create('Frame', {
-				BackgroundColor3 = Library.BackgroundColor;
-				BorderColor3 = Library.OutlineColor;
-				Size = UDim2.new(1, 0, 0, 507);
-				ZIndex = 2;
-				Parent = Info.Side == 1 and LeftSide or RightSide;
-			});
+				BackgroundColor3 = Library.BackgroundColor,
+				BorderColor3 = Library.OutlineColor,
+				Size = UDim2.new(1, 0, 0, 507),
+				ZIndex = 2,
+				Parent = Info.Side == 1 and LeftSide or RightSide
+			})
 
 			Library:AddToRegistry(BoxOuter, {
 				BackgroundColor3 = 'BackgroundColor';
@@ -2048,17 +2141,17 @@ function Library.CreateWindow(info)
 			});
 
 			local BoxInner = Library:Create('Frame', {
-				BackgroundColor3 = Library.BackgroundColor;
-				BorderColor3 = Color3.new(0, 0, 0);
-				BorderMode = Enum.BorderMode.Inset;
-				Size = UDim2.new(1, 0, 1, 0);
-				ZIndex = 4;
-				Parent = BoxOuter;
-			});
+				BackgroundColor3 = Library.BackgroundColor,
+				BorderColor3 = Color3.new(0, 0, 0),
+				BorderMode = Enum.BorderMode.Inset,
+				Size = UDim2.new(1, 0, 1, 0),
+				ZIndex = 4,
+				Parent = BoxOuter
+			})
 
 			Library:AddToRegistry(BoxInner, {
-				BackgroundColor3 = 'BackgroundColor';
-			});
+				BackgroundColor3 = 'BackgroundColor'
+			})
 
 			local Highlight = Library:Create('Frame', {
 				BackgroundColor3 = Library.AccentColor;
@@ -2129,8 +2222,8 @@ function Library.CreateWindow(info)
 
 		function Tab:AddTabbox(Info)
 			local Tabbox = {
-				Tabs = {};
-			};
+				Tabs = {}
+			}
 
 			local BoxOuter = Library:Create('Frame', {
 				BackgroundColor3 = Library.BackgroundColor;
@@ -2197,8 +2290,8 @@ function Library.CreateWindow(info)
 				});
 
 				Library:AddToRegistry(Button, {
-					BackgroundColor3 = 'MainColor';
-				});
+					BackgroundColor3 = 'MainColor'
+				})
 
 				local ButtonLabel = Library:CreateLabel({
 					Size = UDim2.new(1, 0, 1, 0);
@@ -2331,7 +2424,7 @@ function Library.CreateWindow(info)
 		return Tab;
 	end;
 
-	
+
 	InputService.InputBegan:Connect(function(Input, Processed)
 		if Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
 			Outer.Visible = not Outer.Visible
