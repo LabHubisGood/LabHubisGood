@@ -197,6 +197,27 @@ function Library:UpdateColorsUsingRegistry()
 	end;
 end;
 
+function Library:Unload()
+	-- Unload all of the signals
+	for Idx,values in pairs(Toggles) do
+		print(Toggles,values.Value)
+		if typeof(values.Value) == "boolean" then
+			values:SetValue(false)
+		end
+	end
+
+	-- Call our unload callback, maybe to undo some hooks etc
+	if Library.OnUnload then
+		Library.OnUnload()
+	end
+
+	ScreenGui:Destroy()
+end
+
+function Library:OnUnload(Callback)
+	Library.OnUnload = Callback
+end
+
 local BaseAddons = {};
 
 do
@@ -1188,18 +1209,28 @@ do
 		local Groupbox = self;
 		local Container = Groupbox.Container;
 
+		local SlidersetMain = Library:Create('Frame', {
+			BackgroundTransparency = 1,
+			Size = UDim2.new(1, 0, 0, 14),
+			Visible = Info and not Info.Compact or Info.SetSlider or false,
+			ZIndex = 1,
+			Parent = Container
+		})
+
 		if not Info.Compact then
 			Library:CreateLabel({
-				Size = UDim2.new(1, 0, 0, 10);
+				AnchorPoint = Vector2.new(0,.5),
+				Position = UDim2.fromScale(0,.5),
+				Size = UDim2.new(1, 0, 1, 0);
 				TextSize = 14;
 				Text = Info.Text;
 				TextXAlignment = Enum.TextXAlignment.Left;
 				TextYAlignment = Enum.TextYAlignment.Bottom;
 				ZIndex = 5;
-				Parent = Container;
-			});
+				Parent = SlidersetMain
+			})
 
-			Groupbox:AddBlank(3);
+			--Groupbox:AddBlank(3)
 		end
 
 		local SliderOuter = Library:Create('Frame', {
@@ -1317,6 +1348,42 @@ do
 				Slider.Changed();
 			end;
 		end;
+
+		if Info.SetSlider then
+			local SetSliderFrame = Library:Create('Frame', {
+				AnchorPoint = Vector2.new(0,.5),
+				Position = UDim2.fromScale(.7,.45),
+				BackgroundColor3 = Library.MainColor,
+				BorderColor3 = Color3.new(0,0,0),
+				Size = UDim2.new(.3, -4, 1, -1),
+				ZIndex = 5,
+				Parent = SlidersetMain
+			})
+			local Sliderset = Library:Create('TextBox', {
+				BackgroundColor3 = Library.MainColor,
+				BorderColor3 = Library.OutlineColor,
+				BorderMode = Enum.BorderMode.Inset,
+				TextColor3 = Color3.new(1,1,1),
+				Size = UDim2.new(1, 0, 1, 0),
+				TextScaled = true,
+				ZIndex = 5,
+				Parent = SetSliderFrame
+			})
+			Sliderset.FocusLost:Connect(function(enter)
+				if enter and tonumber(Sliderset.Text) then
+					local nValue = math.clamp(tonumber(Sliderset.Text),Slider.Min,Slider.Max)
+					local OldValue = Slider.Value
+					Slider.Value = nValue
+
+					Sliderset.Text = nValue
+					Slider:Display()
+
+					if nValue ~= OldValue and Slider.Changed then
+						Slider.Changed()
+					end
+				end
+			end)
+		end
 
 		SliderInner.InputBegan:Connect(function(Input)
 			if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
@@ -2407,33 +2474,32 @@ function Library.CreateWindow(info)
 		end;
 
 		function Tab:AddRightTabbox(Name)
-			return Tab:AddTabbox({ Name = Name, Side = 2; });
-		end;
+			return Tab:AddTabbox({ Name = Name, Side = 2; })
+		end
 
 		TabButton.InputBegan:Connect(function(Input)
 			if Input.UserInputType == Enum.UserInputType.MouseButton1 then
-				Tab:ShowTab();
-			end;
-		end);
+				Tab:ShowTab()
+			end
+		end)
 
 		if #TabContainer:GetChildren() == 1 then
-			Tab:ShowTab();
-		end;
+			Tab:ShowTab()
+		end
 
-		Window.Tabs[Name] = Tab;
-		return Tab;
-	end;
-
+		Window.Tabs[Name] = Tab
+		return Tab
+	end
 
 	InputService.InputBegan:Connect(function(Input, Processed)
-		if Input.KeyCode == Enum.KeyCode.RightControl or (Input.KeyCode == Enum.KeyCode.RightShift and (not Processed)) then
+		if Input.KeyCode == Enum.KeyCode[Options.MenuKeybind and Options.MenuKeybind.Value or "RightControl"] and not Processed then
 			Outer.Visible = not Outer.Visible
-		end;
-	end);
+		end
+	end)
 
-	Window.Holder = Outer;
+	Window.Holder = Outer
 
-	return Window;
+	return Window
 end
 
 return Library
