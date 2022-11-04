@@ -5,7 +5,7 @@ local TweenService = game:GetService('TweenService')
 local RunService = game:GetService('RunService')
 local LocalPlayer = game:GetService('Players').LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-local CoreGui = LocalPlayer.PlayerGui--game:GetService("CoreGui")
+local CoreGui = game:GetService("CoreGui")
 
 local Library = {}
 
@@ -20,8 +20,8 @@ ScreenGui.Parent = CoreGui
 local Toggles = {}
 local Options = {}
 
---getgenv().Toggles = Toggles
---getgenv().Options = Options
+getgenv().Toggles = Toggles
+getgenv().Options = Options
 
 local Library = {
 	Registry = {},
