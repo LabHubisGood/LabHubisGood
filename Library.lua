@@ -11,7 +11,13 @@ local Library = {}
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end)
 
+local rannun = Random.new():NextNumber(1000000,9999999)
+local oldScreenGui = CoreGui:FindFirstChild(rannun)
+if oldScreenGui then
+	oldScreenGui:Destroy()
+end
 local ScreenGui = Instance.new('ScreenGui')
+ScreenGui.Name = tostring(rannun)
 ProtectGui(ScreenGui)
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
@@ -34,7 +40,8 @@ local Library = {
 	AccentColor = Color3.fromRGB(64, 188, 243),
 	OutlineColor = Color3.fromRGB(50, 50, 50),
 	Black = Color3.new(0, 0, 0),
-	ThemeManager = {}
+	ThemeManager = {},
+	Icon = nil
 }
 
 function Library:AttemptSave()
@@ -133,7 +140,7 @@ end;
 
 function Library:Notify(Text, Time)
 	local XSize, YSize = Library:GetTextBounds(Text, Enum.Font.Code, 14).x,Library:GetTextBounds(Text, Enum.Font.Code, 14).y;
-	
+
 	YSize = YSize + 7
 
 	local NotifyOuter = Library:Create('Frame', {
@@ -1003,11 +1010,11 @@ do
 		Label.TextLabel = TextLabel;
 		Label.Container = Container;
 		setmetatable(Label, BaseAddons);
-		
+
 		function Label:NewText(Text)
 			TextLabel.Text = Text
 		end
-		
+
 		Groupbox:AddBlank(5);
 		Groupbox:Resize();
 
@@ -1887,7 +1894,7 @@ do
 			ListOuter.Size = UDim2.new(1, -8, 0, Y);
 			Scrolling.CanvasSize = UDim2.new(0, 0, 0, Count * 20);
 
-			 ListOuter.Size = UDim2.new(1, -8, 0, (#Values * 20) + 2);
+			ListOuter.Size = UDim2.new(1, -8, 0, (#Values * 20) + 2);
 		end;
 
 		function Dropdown:OpenDropdown()
@@ -2149,9 +2156,9 @@ function Library.CreateWindow(info)
 		ZIndex = 1,
 		Parent = ScreenGui
 	})
-	
+
 	Library:MakeDraggable(Outer, 50)
-	
+
 	local Inner = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.AccentColor,
@@ -2187,14 +2194,10 @@ function Library.CreateWindow(info)
 		})
 		local IconLabel = Library:Create('ImageLabel', {
 			BackgroundTransparency = 1,
-			ImageColor3 = Library.AccentColor,
 			Size = UDim2.new(1, 0, 1, 0),
 			ZIndex = 1,
 			Image = "rbxassetid://"..info.Title.Icon,
 			Parent = IconFrame
-		})
-		Library:AddToRegistry(IconLabel, {
-			ImageColor3 = 'AccentColor',
 		})
 		Library:Create('UIGradient', {
 			Rotation = 90,
@@ -2204,6 +2207,7 @@ function Library.CreateWindow(info)
 			},
 			Parent = IconFrame
 		})
+		Library.Icon = IconLabel
 	end
 	local TitleOuter = Library:Create('Frame', {
 		BorderColor3 = Color3.new(0, 0, 0),
@@ -2314,7 +2318,7 @@ function Library.CreateWindow(info)
 		ZIndex = 1,
 		Parent = MainSectionInner
 	})
-		local ButtonLeft = Library:Create('Frame', {
+	local ButtonLeft = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.OutlineColor,
 		BorderMode = Enum.BorderMode.Inset,
@@ -2515,7 +2519,7 @@ function Library.CreateWindow(info)
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			Parent = RightSide
 		})
-		
+
 		local function chargesizescrolling(scrolling)
 			local nun = 0
 			local SizeY = 0
@@ -2545,7 +2549,7 @@ function Library.CreateWindow(info)
 				end)
 			end
 		end)
-		
+
 		function Tab:ShowTab()
 			for _, Tab in next, Window.Tabs do
 				Tab:HideTab()
@@ -2562,14 +2566,14 @@ function Library.CreateWindow(info)
 
 		function Tab:AddGroupbox(Info)
 			local Groupbox = {}
-			
+
 			local block = Library:Create('Frame', {
 				BackgroundTransparency = 1,
 				Size = UDim2.new(1, 0, 0, 507),
 				ZIndex = 2,
 				Parent = Info.Side == 1 and LeftSide or RightSide
 			})
-			
+
 			local BoxOuter = Library:Create('Frame', {
 				AnchorPoint = Vector2.new(.5,.5),
 				Position = UDim2.new(.5, 0, .5, 0),
@@ -2669,7 +2673,7 @@ function Library.CreateWindow(info)
 			local Tabbox = {
 				Tabs = {}
 			}
-			
+
 			local block = Library:Create('Frame', {
 				BackgroundTransparency = 1,
 				Size = UDim2.new(1, 0, 0, 0);
@@ -2905,13 +2909,28 @@ Library.ThemeManager = {} do
 		local data = customThemeData or self.BuiltInThemes[theme]
 
 		if not data then return end
-
+		
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
 			self.Library[idx] = Color3.fromHex(col)
 
 			if Options[idx] then
 				Options[idx]:SetValueRGB(Color3.fromHex(col))
+				if idx == "AccentColor" then
+					if Library.Icon then
+						local ID = 11411584338
+						if col == "40bcf3" then
+						elseif col == "db4467" then
+							ID = 11465780134
+						elseif col == "3db488" then
+							ID = 11465860189
+						elseif col == "6759b3" then
+							ID = 11465872108
+						end
+						Library.Icon.Image = "rbxassetid://"..ID
+
+					end
+				end
 			end
 		end
 
@@ -3026,19 +3045,19 @@ Library.ThemeManager = {} do
 	end
 
 	function Library.ThemeManager:GetCustomTheme(file)
-			local path = self.Folder .. '/themes/' .. file
-			if not isfile(path) then
-				return nil
-			end
+		local path = self.Folder .. '/themes/' .. file
+		if not isfile(path) then
+			return nil
+		end
 
-			local data = readfile(path)
-			local success, decoded = pcall(httpService.JSONDecode, httpService, data)
+		local data = readfile(path)
+		local success, decoded = pcall(httpService.JSONDecode, httpService, data)
 
-			if not success then
-				return nil
-			end
+		if not success then
+			return nil
+		end
 
-			return decoded
+		return decoded
 	end
 
 	function Library.ThemeManager:SaveCustomTheme(file)
@@ -3303,16 +3322,16 @@ Library.SaveManager = {} do
 	end
 
 	function Library.SaveManager:LoadAutoloadConfig()
-			if isfile(self.Folder .. '/settings/autoload.txt') then
-				local name = readfile(self.Folder .. '/settings/autoload.txt')
+		if isfile(self.Folder .. '/settings/autoload.txt') then
+			local name = readfile(self.Folder .. '/settings/autoload.txt')
 
-				local success, err = self:Load(name)
-				if not success then
-					return self.Library:Notify('Failed to load autoload config: ' .. err)
-				end
-
-				self.Library:Notify(string.format('Auto loaded config %q', name))
+			local success, err = self:Load(name)
+			if not success then
+				return self.Library:Notify('Failed to load autoload config: ' .. err)
 			end
+
+			self.Library:Notify(string.format('Auto loaded config %q', name))
+		end
 	end
 
 	function Library.SaveManager:BuildConfigSection(tab)
