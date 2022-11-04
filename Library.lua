@@ -1492,6 +1492,44 @@ do
 
 		return Button;
 	end;
+	
+	function Funcs:AddDivider()
+		local Groupbox = self;
+		local Container = self.Container
+
+		local Divider = {
+			Type = 'Divider',
+		}
+
+		Groupbox:AddBlank(2);
+		local DividerOuter = Library:Create('Frame', {
+			BorderColor3 = Color3.new(0, 0, 0);
+			Size = UDim2.new(1, -4, 0, 5);
+			ZIndex = 5;
+			Parent = Container;
+		});
+
+		local DividerInner = Library:Create('Frame', {
+			BackgroundColor3 = Library.MainColor;
+			BorderColor3 = Library.OutlineColor;
+			BorderMode = Enum.BorderMode.Inset;
+			Size = UDim2.new(1, 0, 1, 0);
+			ZIndex = 6;
+			Parent = DividerOuter;
+		});
+
+		Library:AddToRegistry(DividerOuter, {
+			BorderColor3 = 'Black';
+		});
+
+		Library:AddToRegistry(DividerInner, {
+			BackgroundColor3 = 'MainColor';
+			BorderColor3 = 'OutlineColor';
+		});
+
+		Groupbox:AddBlank(9);
+		Groupbox:Resize();
+	end
 
 	function Funcs:AddInput(Idx, Info)
 		local Textbox = {
