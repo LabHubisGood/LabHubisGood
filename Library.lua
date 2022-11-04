@@ -33,524 +33,9 @@ local Library = {
 	BackgroundColor = Color3.fromRGB(20, 20, 20),
 	AccentColor = Color3.fromRGB(64, 188, 243),
 	OutlineColor = Color3.fromRGB(50, 50, 50),
-	InlineColor = Color3.fromRGB(50, 50, 50),
 	Black = Color3.new(0, 0, 0),
 	ThemeManager = {}
 }
-
-Library.ThemeManager = {} do
-	Library.ThemeManager.Folder = 'LinoriaLibSettings'
-	-- if not isfolder(ThemeManager.Folder) then makefolder(ThemeManager.Folder) end
-
-	Library.ThemeManager.Library = nil
-	Library.ThemeManager.BuiltInThemes = {
-		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"0055ff","BackgroundColor":"141414","OutlineColor":"323232"}') },
-		['Green'] 			= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"141414","AccentColor":"00ff8b","BackgroundColor":"1c1c1c","OutlineColor":"3c3c3c"}') },
-		['Jester'] 			= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"db4467","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
-		['Mint'] 			= { 4, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"3db488","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
-		['Tokyo Night'] 	= { 5, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"191925","AccentColor":"6759b3","BackgroundColor":"16161f","OutlineColor":"323232"}') },
-		['Ubuntu'] 			= { 6, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"3e3e3e","AccentColor":"e2581e","BackgroundColor":"323232","OutlineColor":"191919"}') },
-	}
-
-	function Library.ThemeManager:ApplyTheme(theme)
-		local customThemeData = self:GetCustomTheme(theme)
-		local data = customThemeData or self.BuiltInThemes[theme]
-
-		if not data then return end
-
-		-- custom themes are just regular dictionaries instead of an array with { index, dictionary }
-
-		local scheme = data[2]
-		for idx, col in next, customThemeData or scheme do
-			self.Library[idx] = Color3.fromHex(col)
-
-			if Options[idx] then
-				Options[idx]:SetValueRGB(Color3.fromHex(col))
-			end
-		end
-
-		self:ThemeUpdate()
-	end
-
-	function Library.ThemeManager:ThemeUpdate()
-		-- This allows us to force apply themes without loading the themes tab :)
-		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
-		for i, field in next, options do
-			if Options and Options[field] then
-				self.Library[field] = Options[field].Value
-			end
-		end
-
-		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);
-		self.Library:UpdateColorsUsingRegistry()
-	end
-
-	function Library.ThemeManager:LoadDefault()		
-		local theme = 'Default'
-		local content = isfile(self.Folder .. '/themes/default.txt') and readfile(self.Folder .. '/themes/default.txt')
-
-		local isDefault = true
-		if content then
-			if self.BuiltInThemes[content] then
-				theme = content
-			elseif self:GetCustomTheme(content) then
-				theme = content
-				isDefault = false;
-			end
-		elseif self.BuiltInThemes[self.DefaultTheme] then
-			theme = self.DefaultTheme
-		end
-
-		if isDefault then
-			Options.ThemeManager_ThemeList:SetValue(theme)
-		else
-			self:ApplyTheme(theme)
-		end
-	end
-
-	function Library.ThemeManager:SaveDefault(theme)
-		writefile(self.Folder .. '/themes/default.txt', theme)
-	end
-
-	function Library.ThemeManager:CreateThemeManager(groupbox)
-		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor });
-		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor });
-		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor });
-		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
-		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
-
-		local ThemesArray = {}
-		for Name, Theme in next, self.BuiltInThemes do
-			table.insert(ThemesArray, Name)
-		end
-
-		table.sort(ThemesArray, function(a, b) return self.BuiltInThemes[a][1] < self.BuiltInThemes[b][1] end)
-
-		groupbox:AddDivider()
-		groupbox:AddDropdown('ThemeManager_ThemeList', { Text = 'Theme list', Values = ThemesArray, Default = 1 })
-
-		groupbox:AddButton('Set as default', function()
-			self:SaveDefault(Options.ThemeManager_ThemeList.Value)
-			self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_ThemeList.Value))
-		end)
-
-		Options.ThemeManager_ThemeList:OnChanged(function()
-			self:ApplyTheme(Options.ThemeManager_ThemeList.Value)
-		end)
-
-		groupbox:AddDivider()
-		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 })
-		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
-
-		groupbox:AddButton('Load custom theme', function() 
-			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
-		end)
-
-		groupbox:AddButton('Save custom theme', function() 
-			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
-
-			Options.ThemeManager_CustomThemeList.Values = self:ReloadCustomThemes()
-			Options.ThemeManager_CustomThemeList:SetValues()
-			Options.ThemeManager_CustomThemeList:SetValue(nil)
-		end)
-
-		groupbox:AddButton('Refresh list', function()
-			Options.ThemeManager_CustomThemeList.Values = self:ReloadCustomThemes()
-			Options.ThemeManager_CustomThemeList:SetValues()
-			Options.ThemeManager_CustomThemeList:SetValue(nil)
-		end)
-
-		groupbox:AddButton('Set as default', function()
-			if Options.ThemeManager_CustomThemeList.Value ~= nil and Options.ThemeManager_CustomThemeList.Value ~= '' then
-				self:SaveDefault(Options.ThemeManager_CustomThemeList.Value)
-				self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_CustomThemeList.Value))
-			end
-		end)
-
-		Library.ThemeManager:LoadDefault()
-
-		local function UpdateTheme()
-			self:ThemeUpdate()
-		end
-
-		Options.BackgroundColor:OnChanged(UpdateTheme)
-		Options.MainColor:OnChanged(UpdateTheme)
-		Options.AccentColor:OnChanged(UpdateTheme)
-		Options.OutlineColor:OnChanged(UpdateTheme)
-		Options.FontColor:OnChanged(UpdateTheme)
-	end
-
-	function Library.ThemeManager:GetCustomTheme(file)
-		local path = self.Folder .. '/themes/' .. file
-		if not isfile(path) then
-			return nil
-		end
-
-		local data = readfile(path)
-		local success, decoded = pcall(httpService.JSONDecode, httpService, data)
-
-		if not success then
-			return nil
-		end
-
-		return decoded
-	end
-
-	function Library.ThemeManager:SaveCustomTheme(file)
-		if file:gsub(' ', '') == '' then
-			return self.Library:Notify('Invalid file name for theme (empty)', 3)
-		end
-
-		local theme = {}
-		local fields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
-
-		for _, field in next, fields do
-			theme[field] = Options[field].Value:ToHex()
-		end
-
-		writefile(self.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))
-	end
-
-	function Library.ThemeManager:ReloadCustomThemes()
-		local list = listfiles(self.Folder .. '/themes')
-
-		local out = {}
-		for i = 1, #list do
-			local file = list[i]
-			if file:sub(-5) == '.json' then
-				-- i hate this but it has to be done ...
-
-				local pos = file:find('.json', 1, true)
-				local char = file:sub(pos, pos)
-
-				while char ~= '/' and char ~= '\\' and char ~= '' do
-					pos = pos - 1
-					char = file:sub(pos, pos)
-				end
-
-				if char == '/' or char == '\\' then
-					table.insert(out, file:sub(pos + 1))
-				end
-			end
-		end
-
-		return out
-	end
-
-	function Library.ThemeManager:SetLibrary(lib)
-		self.Library = lib
-	end
-
-	function Library.ThemeManager:BuildFolderTree()
-		local paths = {}
-
-		-- build the entire tree if a path is like some-hub/phantom-forces
-		-- makefolder builds the entire tree on Synapse X but not other exploits
-
-		local parts = self.Folder:split('/')
-		for idx = 1, #parts do
-			paths[#paths + 1] = table.concat(parts, '/', 1, idx)
-		end
-
-		table.insert(paths, self.Folder .. '/themes')
-		table.insert(paths, self.Folder .. '/settings')
-
-		for i = 1, #paths do
-			local str = paths[i]
-			if not isfolder(str) then
-				makefolder(str)
-			end
-		end
-	end
-
-	function Library.ThemeManager:SetFolder(folder)
-		self.Folder = folder
-		self:BuildFolderTree()
-	end
-
-	function Library.ThemeManager:CreateGroupBox(tab)
-		assert(self.Library, 'Must set ThemeManager.Library first!')
-		return tab:AddLeftGroupbox('Themes')
-	end
-
-	function Library.ThemeManager:ApplyToTab(tab)
-		assert(self.Library, 'Must set ThemeManager.Library first!')
-		local groupbox = self:CreateGroupBox(tab)
-		self:CreateThemeManager(groupbox)
-	end
-
-	function Library.ThemeManager:ApplyToGroupbox(groupbox)
-		assert(self.Library, 'Must set ThemeManager.Library first!')
-		self:CreateThemeManager(groupbox)
-	end
-
-	Library.ThemeManager:BuildFolderTree()
-end
-
-Library.SaveManager = {} do
-	Library.SaveManager.Folder = 'LinoriaLibSettings'
-	Library.SaveManager.Ignore = {}
-	Library.SaveManager.Parser = {
-		Toggle = {
-			Save = function(idx, object) 
-				return { type = 'Toggle', idx = idx, value = object.Value } 
-			end,
-			Load = function(idx, data)
-				if Toggles[idx] then 
-					Toggles[idx]:SetValue(data.value)
-				end
-			end,
-		},
-		Slider = {
-			Save = function(idx, object)
-				return { type = 'Slider', idx = idx, value = tostring(object.Value) }
-			end,
-			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValue(data.value)
-				end
-			end,
-		},
-		Dropdown = {
-			Save = function(idx, object)
-				return { type = 'Dropdown', idx = idx, value = object.Value, mutli = object.Multi }
-			end,
-			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValue(data.value)
-				end
-			end,
-		},
-		ColorPicker = {
-			Save = function(idx, object)
-				return { type = 'ColorPicker', idx = idx, value = object.Value:ToHex() }
-			end,
-			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValueRGB(Color3.fromHex(data.value))
-				end
-			end,
-		},
-		KeyPicker = {
-			Save = function(idx, object)
-				return { type = 'KeyPicker', idx = idx, mode = object.Mode, key = object.Value }
-			end,
-			Load = function(idx, data)
-				if Options[idx] then 
-					Options[idx]:SetValue({ data.key, data.mode })
-				end
-			end,
-		},
-
-		Input = {
-			Save = function(idx, object)
-				return { type = 'Input', idx = idx, text = object.Value }
-			end,
-			Load = function(idx, data)
-				if Options[idx] and type(data.text) == 'string' then
-					Options[idx]:SetValue(data.text)
-				end
-			end,
-		},
-	}
-
-	function Library.SaveManager:SetIgnoreIndexes(list)
-		for _, key in next, list do
-			self.Ignore[key] = true
-		end
-	end
-
-	function Library.SaveManager:SetFolder(folder)
-		self.Folder = folder;
-		self:BuildFolderTree()
-	end
-
-	function Library.SaveManager:Save(name)
-		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
-
-		local data = {
-			objects = {}
-		}
-
-		for idx, toggle in next, Toggles do
-			if self.Ignore[idx] then continue end
-
-			table.insert(data.objects, self.Parser[toggle.Type].Save(idx, toggle))
-		end
-
-		for idx, option in next, Options do
-			if not self.Parser[option.Type] then continue end
-			if self.Ignore[idx] then continue end
-
-			table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
-		end	
-
-		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
-		if not success then
-			return false, 'failed to encode data'
-		end
-
-		writefile(fullPath, encoded)
-		return true
-	end
-
-	function Library.SaveManager:Load(name)
-		local file = self.Folder .. '/settings/' .. name .. '.json'
-		if not isfile(file) then return false, 'invalid file' end
-
-		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
-		if not success then return false, 'decode error' end
-
-		for _, option in next, decoded.objects do
-			if self.Parser[option.type] then
-				self.Parser[option.type].Load(option.idx, option)
-			end
-		end
-
-		return true
-	end
-
-	function Library.SaveManager:IgnoreThemeSettings()
-		self:SetIgnoreIndexes({ 
-			"BackgroundColor", "MainColor", "AccentColor", "OutlineColor", "FontColor", -- themes
-			"ThemeManager_ThemeList", 'ThemeManager_CustomThemeList', 'ThemeManager_CustomThemeName', -- themes
-		})
-	end
-
-	function Library.SaveManager:BuildFolderTree()
-		local paths = {
-			self.Folder,
-			self.Folder .. '/themes',
-			self.Folder .. '/settings'
-		}
-
-		for i = 1, #paths do
-			local str = paths[i]
-			if not isfolder(str) then
-				makefolder(str)
-			end
-		end
-	end
-
-	function Library.SaveManager:RefreshConfigList()
-		local list = listfiles(self.Folder .. '/settings')
-
-		local out = {}
-		for i = 1, #list do
-			local file = list[i]
-			if file:sub(-5) == '.json' then
-				-- i hate this but it has to be done ...
-
-				local pos = file:find('.json', 1, true)
-				local start = pos
-
-				local char = file:sub(pos, pos)
-				while char ~= '/' and char ~= '\\' and char ~= '' do
-					pos = pos - 1
-					char = file:sub(pos, pos)
-				end
-
-				if char == '/' or char == '\\' then
-					table.insert(out, file:sub(pos + 1, start - 1))
-				end
-			end
-		end
-
-		return out
-	end
-
-	function Library.SaveManager:SetLibrary(library)
-		self.Library = library
-	end
-
-	function Library.SaveManager:LoadAutoloadConfig()
-		if isfile(self.Folder .. '/settings/autoload.txt') then
-			local name = readfile(self.Folder .. '/settings/autoload.txt')
-
-			local success, err = self:Load(name)
-			if not success then
-				return self.Library:Notify('Failed to load autoload config: ' .. err)
-			end
-
-			self.Library:Notify(string.format('Auto loaded config %q', name))
-		end
-	end
-
-
-	function Library.SaveManager:BuildConfigSection(tab)
-		assert(self.Library, 'Must set SaveManager.Library')
-
-		local section = tab:AddRightGroupbox('Configuration')
-
-		section:AddDropdown('SaveManager_ConfigList', { Text = 'Config list', Values = self:RefreshConfigList(), AllowNull = true })
-		section:AddInput('SaveManager_ConfigName',    { Text = 'Config name' })
-
-		section:AddDivider()
-
-		section:AddButton('Create config', function()
-			local name = Options.SaveManager_ConfigName.Value
-
-			if name:gsub(' ', '') == '' then 
-				return self.Library:Notify('Invalid config name (empty)', 2)
-			end
-
-			local success, err = self:Save(name)
-			if not success then
-				return self.Library:Notify('Failed to save config: ' .. err)
-			end
-
-			self.Library:Notify(string.format('Created config %q', name))
-
-			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
-			Options.SaveManager_ConfigList:SetValues()
-			Options.SaveManager_ConfigList:SetValue(nil)
-		end):AddButton('Load config', function()
-			local name = Options.SaveManager_ConfigList.Value
-
-			local success, err = self:Load(name)
-			if not success then
-				return self.Library:Notify('Failed to load config: ' .. err)
-			end
-
-			self.Library:Notify(string.format('Loaded config %q', name))
-		end)
-
-		section:AddButton('Overwrite config', function()
-			local name = Options.SaveManager_ConfigList.Value
-
-			local success, err = self:Save(name)
-			if not success then
-				return self.Library:Notify('Failed to overwrite config: ' .. err)
-			end
-
-			self.Library:Notify(string.format('Overwrote config %q', name))
-		end)
-
-		section:AddButton('Autoload config', function()
-			local name = Options.SaveManager_ConfigList.Value
-			writefile(self.Folder .. '/settings/autoload.txt', name)
-			Library.SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
-			self.Library:Notify(string.format('Set %q to auto load', name))
-		end)
-
-		section:AddButton('Refresh config list', function()
-			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
-			Options.SaveManager_ConfigList:SetValues()
-			Options.SaveManager_ConfigList:SetValue(nil)
-		end)
-
-		Library.SaveManager.AutoloadLabel = section:AddLabel('Current autoload config: none', true)
-
-		if isfile(self.Folder .. '/settings/autoload.txt') then
-			local name = readfile(self.Folder .. '/settings/autoload.txt')
-			Library.SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
-		end
-
-		Library.SaveManager:SetIgnoreIndexes({ 'SaveManager_ConfigList', 'SaveManager_ConfigName' })
-	end
-
-	Library.SaveManager:BuildFolderTree()
-end
 
 function Library:AttemptSave()
 	if Library.SaveManager then
@@ -587,6 +72,10 @@ function Library:CreateLabel(Properties, IsHud)
 
 	return Library:Create(_Instance, Properties);
 end;
+
+function Library:GetTextBounds(Text, Font, Size)
+	return TextService:GetTextSize(Text, Size, Font, Vector2.new(1920, 1080))
+end
 
 function Library:MakeDraggable(Instance, Cutoff)
 	Instance.Active = true;
@@ -639,6 +128,97 @@ function Library:OnHighlight(HighlightInstance, Instance, Properties, Properties
 				Reg.Properties[Property] = ColorIdx;
 			end;
 		end;
+	end);
+end;
+
+function Library:Notify(Text, Time)
+	local XSize, YSize = Library:GetTextBounds(Text, Enum.Font.Code, 14).x,Library:GetTextBounds(Text, Enum.Font.Code, 14).y;
+	
+	YSize = YSize + 7
+
+	local NotifyOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0);
+		Position = UDim2.new(0, 100, 0, 10);
+		Size = UDim2.new(0, 0, 0, YSize);
+		ClipsDescendants = true;
+		ZIndex = 100;
+		Parent = Library.NotificationArea;
+	});
+
+	local NotifyInner = Library:Create('Frame', {
+		BackgroundColor3 = Library.MainColor;
+		BorderColor3 = Library.OutlineColor;
+		BorderMode = Enum.BorderMode.Inset;
+		Size = UDim2.new(1, 0, 1, 0);
+		ZIndex = 101;
+		Parent = NotifyOuter;
+	});
+
+	Library:AddToRegistry(NotifyInner, {
+		BackgroundColor3 = 'MainColor';
+		BorderColor3 = 'OutlineColor';
+	}, true);
+
+	local InnerFrame = Library:Create('Frame', {
+		BackgroundColor3 = Color3.new(1, 1, 1);
+		BorderSizePixel = 0;
+		Position = UDim2.new(0, 1, 0, 1);
+		Size = UDim2.new(1, -2, 1, -2);
+		ZIndex = 102;
+		Parent = NotifyInner;
+	});
+
+	local Gradient = Library:Create('UIGradient', {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+			ColorSequenceKeypoint.new(1, Library.MainColor),
+		});
+		Rotation = -90;
+		Parent = InnerFrame;
+	});
+
+	Library:AddToRegistry(Gradient, {
+		Color = function()
+			return ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+				ColorSequenceKeypoint.new(1, Library.MainColor),
+			});
+		end
+	});
+
+	local NotifyLabel = Library:CreateLabel({
+		Position = UDim2.new(0, 4, 0, 0);
+		Size = UDim2.new(1, -4, 1, 0);
+		Text = Text;
+		TextXAlignment = Enum.TextXAlignment.Left;
+		TextSize = 14;
+		ZIndex = 103;
+		Parent = InnerFrame;
+	});
+
+	local LeftColor = Library:Create('Frame', {
+		BackgroundColor3 = Library.AccentColor;
+		BorderSizePixel = 0;
+		Position = UDim2.new(0, -1, 0, -1);
+		Size = UDim2.new(0, 3, 1, 2);
+		ZIndex = 104;
+		Parent = NotifyOuter;
+	});
+
+	Library:AddToRegistry(LeftColor, {
+		BackgroundColor3 = 'AccentColor';
+	}, true);
+
+	pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, XSize + 8 + 4, 0, YSize), 'Out', 'Quad', 0.4, true);
+
+	task.spawn(function()
+		wait(Time or 5);
+
+		pcall(NotifyOuter.TweenSize, NotifyOuter, UDim2.new(0, 0, 0, YSize), 'Out', 'Quad', 0.4, true);
+
+		wait(0.4);
+
+		NotifyOuter:Destroy();
 	end);
 end;
 
@@ -708,13 +288,16 @@ end);
 function Library:UpdateColorsUsingRegistry()
 	for Idx, Object in next, Library.Registry do
 		for Property, ColorIdx in next, Object.Properties do
-			Object.Instance[Property] = Library[ColorIdx];
+			if type(ColorIdx) == 'string' then
+				Object.Instance[Property] = Library[ColorIdx];
+			elseif type(ColorIdx) == 'function' then
+				Object.Instance[Property] = ColorIdx()
+			end
 		end;
 	end;
 end;
 
 function Library:Unload()
-	-- Unload all of the signals
 	for Idx,values in pairs(Toggles) do
 		print(Toggles,values.Value)
 		if typeof(values.Value) == "boolean" then
@@ -722,7 +305,6 @@ function Library:Unload()
 		end
 	end
 
-	-- Call our unload callback, maybe to undo some hooks etc
 	if Library.OnUnload then
 		Library.OnUnload()
 	end
@@ -858,8 +440,8 @@ do
 			Parent = HueSelectorOuter;
 		});
 
-		local HueTextSize = Library:GetTextBounds('Hex color', Enum.Font.Code, 16) + 3
-		local RgbTextSize = Library:GetTextBounds('255, 255, 255', Enum.Font.Code, 16) + 3
+		local HueTextSize = Library:GetTextBounds('Hex color', Enum.Font.Code, 16).x + 3
+		local RgbTextSize = Library:GetTextBounds('255, 255, 255', Enum.Font.Code, 16).x + 3
 
 		local HueBoxOuter = Library:Create('Frame', {
 			BorderColor3 = Color3.new(0, 0, 0);
@@ -1084,7 +666,7 @@ do
 		local KeyPicker = {
 			Value = Info.Default;
 			Toggled = false;
-			Mode = Info.Mode or 'Toggle'; -- Always, Toggle, Hold
+			Mode = Info.Mode or 'Toggle';
 			Type = 'KeyPicker';
 		};
 
@@ -1421,7 +1003,11 @@ do
 		Label.TextLabel = TextLabel;
 		Label.Container = Container;
 		setmetatable(Label, BaseAddons);
-
+		
+		function Label:NewText(Text)
+			TextLabel.Text = Text
+		end
+		
 		Groupbox:AddBlank(5);
 		Groupbox:Resize();
 
@@ -1463,10 +1049,10 @@ do
 			Color = ColorSequence.new({
 				ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
 				ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212))
-			}),
-			Rotation = 90,
-			Parent = ButtonInner
-		})
+			});
+			Rotation = 90;
+			Parent = ButtonInner;
+		});
 
 		local ButtonLabel = Library:CreateLabel({
 			Size = UDim2.new(1, 0, 1, 0);
@@ -1487,12 +1073,56 @@ do
 			end;
 		end);
 
+		function Button:AddButton(Text, Func)
+			local SubButton = {}
+
+			ButtonOuter.Size = UDim2.new(0.5, -2, 0, 20)
+
+			local Outer = ButtonOuter:Clone()
+			local Inner = Outer.Frame;
+			local Label = Inner:FindFirstChildWhichIsA('TextLabel')
+
+			Outer.Position = UDim2.new(1, 2, 0, 0)
+			Outer.Size = UDim2.fromOffset(ButtonOuter.AbsoluteSize.X - 2, ButtonOuter.AbsoluteSize.Y)
+			Outer.Parent = ButtonOuter
+
+			Label.Text = Text;
+
+			Library:AddToRegistry(Inner, {
+				BackgroundColor3 = 'MainColor';
+				BorderColor3 = 'OutlineColor';
+			});
+
+			Library:OnHighlight(Outer, Outer,
+				{ BorderColor3 = 'AccentColor' },
+				{ BorderColor3 = 'Black' }
+			)
+
+			Library:Create('UIGradient', {
+				Color = ColorSequence.new({
+					ColorSequenceKeypoint.new(0, Color3.new(1, 1, 1)),
+					ColorSequenceKeypoint.new(1, Color3.fromRGB(212, 212, 212))
+				});
+
+				Rotation = 90;
+				Parent = Inner;
+			});
+
+			Outer.InputBegan:Connect(function(Input)
+				if Input.UserInputType == Enum.UserInputType.MouseButton1 and not Library:MouseIsOverOpenedFrame() then
+					Func();
+				end;
+			end);
+
+			return SubButton
+		end 
+
 		Groupbox:AddBlank(5);
 		Groupbox:Resize();
 
 		return Button;
 	end;
-	
+
 	function Funcs:AddDivider()
 		local Groupbox = self;
 		local Container = self.Container
@@ -1784,7 +1414,7 @@ do
 				Parent = SlidersetMain
 			})
 
-			--Groupbox:AddBlank(3)
+			Groupbox:AddBlank(3)
 		end
 
 		local SliderOuter = Library:Create('Frame', {
@@ -2148,7 +1778,6 @@ do
 
 			for _, Element in next, Scrolling:GetChildren() do
 				if not Element:IsA('UIListLayout') then
-					-- Library:RemoveFromRegistry(Element);
 					Element:Destroy();
 				end;
 			end;
@@ -2258,7 +1887,7 @@ do
 			ListOuter.Size = UDim2.new(1, -8, 0, Y);
 			Scrolling.CanvasSize = UDim2.new(0, 0, 0, Count * 20);
 
-			-- ListOuter.Size = UDim2.new(1, -8, 0, (#Values * 20) + 2);
+			 ListOuter.Size = UDim2.new(1, -8, 0, (#Values * 20) + 2);
 		end;
 
 		function Dropdown:OpenDropdown()
@@ -2355,6 +1984,156 @@ do
 	end;
 end;
 
+do
+	Library.NotificationArea = Library:Create('Frame', {
+		BackgroundTransparency = 1;
+		Position = UDim2.new(0, 0, 0, 40);
+		Size = UDim2.new(0, 300, 0, 200);
+		ZIndex = 100;
+		Parent = ScreenGui;
+	});
+
+	Library:Create('UIListLayout', {
+		Padding = UDim.new(0, 4);
+		FillDirection = Enum.FillDirection.Vertical;
+		SortOrder = Enum.SortOrder.LayoutOrder;
+		Parent = Library.NotificationArea;
+	});
+
+	local WatermarkOuter = Library:Create('Frame', {
+		BorderColor3 = Color3.new(0, 0, 0);
+		Position = UDim2.new(0, 100, 0, -25);
+		Size = UDim2.new(0, 213, 0, 20);
+		ZIndex = 200;
+		Visible = false;
+		Parent = ScreenGui;
+	});
+
+	local WatermarkInner = Library:Create('Frame', {
+		BackgroundColor3 = Library.MainColor;
+		BorderColor3 = Library.AccentColor;
+		BorderMode = Enum.BorderMode.Inset;
+		Size = UDim2.new(1, 0, 1, 0);
+		ZIndex = 201;
+		Parent = WatermarkOuter;
+	});
+
+	Library:AddToRegistry(WatermarkInner, {
+		BorderColor3 = 'AccentColor';
+	});
+
+	local InnerFrame = Library:Create('Frame', {
+		BackgroundColor3 = Color3.new(1, 1, 1);
+		BorderSizePixel = 0;
+		Position = UDim2.new(0, 1, 0, 1);
+		Size = UDim2.new(1, -2, 1, -2);
+		ZIndex = 202;
+		Parent = WatermarkInner;
+	});
+
+	local Gradient = Library:Create('UIGradient', {
+		Color = ColorSequence.new({
+			ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+			ColorSequenceKeypoint.new(1, Library.MainColor),
+		});
+		Rotation = -90;
+		Parent = InnerFrame;
+	});
+
+	Library:AddToRegistry(Gradient, {
+		Color = function()
+			return ColorSequence.new({
+				ColorSequenceKeypoint.new(0, Library:GetDarkerColor(Library.MainColor)),
+				ColorSequenceKeypoint.new(1, Library.MainColor),
+			});
+		end
+	});
+
+	local WatermarkLabel = Library:CreateLabel({
+		Position = UDim2.new(0, 5, 0, 0);
+		Size = UDim2.new(1, -4, 1, 0);
+		TextSize = 14;
+		TextXAlignment = Enum.TextXAlignment.Left;
+		ZIndex = 203;
+		Parent = InnerFrame;
+	});
+
+	Library.Watermark = WatermarkOuter;
+	Library.WatermarkText = WatermarkLabel;
+	Library:MakeDraggable(Library.Watermark);
+
+
+
+	local KeybindOuter = Library:Create('Frame', {
+		AnchorPoint = Vector2.new(0, 0.5);
+		BorderColor3 = Color3.new(0, 0, 0);
+		Position = UDim2.new(0, 10, 0.5, 0);
+		Size = UDim2.new(0, 210, 0, 20);
+		Visible = false;
+		ZIndex = 100;
+		Parent = ScreenGui;
+	});
+
+	local KeybindInner = Library:Create('Frame', {
+		BackgroundColor3 = Library.MainColor;
+		BorderColor3 = Library.OutlineColor;
+		BorderMode = Enum.BorderMode.Inset;
+		Size = UDim2.new(1, 0, 1, 0);
+		ZIndex = 101;
+		Parent = KeybindOuter;
+	});
+
+	Library:AddToRegistry(KeybindInner, {
+		BackgroundColor3 = 'MainColor';
+		BorderColor3 = 'OutlineColor';
+	}, true);
+
+	local ColorFrame = Library:Create('Frame', {
+		BackgroundColor3 = Library.AccentColor;
+		BorderSizePixel = 0;
+		Size = UDim2.new(1, 0, 0, 2);
+		ZIndex = 102;
+		Parent = KeybindInner;
+	});
+
+	Library:AddToRegistry(ColorFrame, {
+		BackgroundColor3 = 'AccentColor';
+	}, true);
+
+	local KeybindLabel = Library:CreateLabel({
+		Size = UDim2.new(1, 0, 0, 20);
+		Position = UDim2.fromOffset(5, 2),
+		TextXAlignment = Enum.TextXAlignment.Left,
+
+		Text = 'Keybinds';
+		ZIndex = 104;
+		Parent = KeybindInner;
+	});
+
+	local KeybindContainer = Library:Create('Frame', {
+		BackgroundTransparency = 1;
+		Size = UDim2.new(1, 0, 1, -20);
+		Position = UDim2.new(0, 0, 0, 20);
+		ZIndex = 1;
+		Parent = KeybindInner;
+	});
+
+	Library:Create('UIListLayout', {
+		FillDirection = Enum.FillDirection.Vertical;
+		SortOrder = Enum.SortOrder.LayoutOrder;
+		Parent = KeybindContainer;
+	});
+
+	Library:Create('UIPadding', {
+		PaddingLeft = UDim.new(0, 5),
+		Parent = KeybindContainer,
+	})
+
+	Library.KeybindFrame = KeybindOuter;
+	Library.KeybindContainer = KeybindContainer;
+	Library:MakeDraggable(KeybindOuter);
+end;
+
 function Library.CreateWindow(info)
 	local Window = {
 		Tabs = {}
@@ -2363,15 +2142,16 @@ function Library.CreateWindow(info)
 	local Outer = Library:Create('Frame', {
 		BackgroundColor3 = Color3.new(0, 0, 0),
 		BorderSizePixel = 0,
-		Position = UDim2.new(0, 175, 0, 50),
+		AnchorPoint = Vector2.new(.5,.5),
+		Position = UDim2.new(.5, 0, .5, 0),
 		Size = UDim2.new(0, 550, 0, 600),
 		Visible = info and info.Show or false,
 		ZIndex = 1,
 		Parent = ScreenGui
 	})
-
+	
 	Library:MakeDraggable(Outer, 50)
-
+	
 	local Inner = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.AccentColor,
@@ -2381,7 +2161,6 @@ function Library.CreateWindow(info)
 		ZIndex = 1,
 		Parent = Outer
 	})
-
 	Library:AddToRegistry(Inner, {
 		BackgroundColor3 = 'MainColor',
 		BorderColor3 = 'AccentColor'
@@ -2402,12 +2181,20 @@ function Library.CreateWindow(info)
 			ZIndex = 1,
 			Parent = IconOuter
 		})
+		Library:AddToRegistry(IconFrame, {
+			BackgroundColor3 = 'MainColor',
+			BorderColor3 = 'OutlineColor'
+		})
 		local IconLabel = Library:Create('ImageLabel', {
 			BackgroundTransparency = 1,
+			ImageColor3 = Library.AccentColor,
 			Size = UDim2.new(1, 0, 1, 0),
 			ZIndex = 1,
 			Image = "rbxassetid://"..info.Title.Icon,
 			Parent = IconFrame
+		})
+		Library:AddToRegistry(IconLabel, {
+			ImageColor3 = 'AccentColor',
 		})
 		Library:Create('UIGradient', {
 			Rotation = 90,
@@ -2433,9 +2220,13 @@ function Library.CreateWindow(info)
 		ZIndex = 1,
 		Parent = TitleOuter
 	})
+	Library:AddToRegistry(TitleFrame, {
+		BackgroundColor3 = 'MainColor',
+		BorderColor3 = 'OutlineColor'
+	})
 	local TitleLabel = Library:CreateLabel({
 		Size = UDim2.new(1, 0, 1, 0),
-		TextColor3 = info and info.Title and info.Title.TextColor3 or nil,
+		TextColor3 = Library.AccentColor,
 		Text = info and info.Title and info.Title.Name or 'hub',
 		TextXAlignment = Enum.TextXAlignment.Center,
 		ZIndex = 1,
@@ -2449,7 +2240,10 @@ function Library.CreateWindow(info)
 		},
 		Parent = TitleFrame
 	})
-	if info and info.Category and info.Category.Name then
+	Library:AddToRegistry(TitleLabel, {
+		TextColor3 = 'AccentColor'
+	})
+	if info and info.Title and info.Title.Category then
 		local CategoryOuter = Library:Create('Frame', {
 			BorderColor3 = Color3.new(0, 0, 0),
 			Position = info and info.Title and info.Title.Icon and UDim2.new(0, 161, 0, 10) or UDim2.new(0, 125, 0, 10),
@@ -2465,10 +2259,13 @@ function Library.CreateWindow(info)
 			ZIndex = 1,
 			Parent = CategoryOuter
 		})
+		Library:AddToRegistry(CategoryFrame, {
+			BackgroundColor3 = 'MainColor',
+			BorderColor3 = 'OutlineColor'
+		})
 		local CategoryLabel = Library:CreateLabel({
 			Size = UDim2.new(1, 0, 1, 0),
-			TextColor3 = info and info.Category and info.Category.TextColor3 or nil,
-			Text = info and info.Category and info.Category.Name or '',
+			Text = info.Title.Category or '',
 			TextXAlignment = Enum.TextXAlignment.Left,
 			ZIndex = 1,
 			Parent = CategoryFrame
@@ -2517,13 +2314,17 @@ function Library.CreateWindow(info)
 		ZIndex = 1,
 		Parent = MainSectionInner
 	})
-	local ButtonLeft = Library:Create('Frame', {
+		local ButtonLeft = Library:Create('Frame', {
 		BackgroundColor3 = Library.MainColor,
 		BorderColor3 = Library.OutlineColor,
 		BorderMode = Enum.BorderMode.Inset,
 		Size = UDim2.new(1, 0, 1, 0),
 		ZIndex = 1,
 		Parent = ButtonLeftOuter
+	})
+	Library:AddToRegistry(ButtonLeft, {
+		BackgroundColor3 = 'MainColor',
+		BorderColor3 = 'OutlineColor'
 	})
 	local LeftLabel = Library:CreateLabel({
 		Size = UDim2.new(1, 0, 1, 0),
@@ -2546,6 +2347,10 @@ function Library.CreateWindow(info)
 		Size = UDim2.new(1, 0, 1, 0),
 		ZIndex = 1,
 		Parent = ButtonRightOuter
+	})
+	Library:AddToRegistry(ButtonRight, {
+		BackgroundColor3 = 'MainColor',
+		BorderColor3 = 'OutlineColor'
 	})
 	local RightLabel = Library:CreateLabel({
 		Size = UDim2.new(1, 0, 1, 0),
@@ -2710,7 +2515,7 @@ function Library.CreateWindow(info)
 			SortOrder = Enum.SortOrder.LayoutOrder,
 			Parent = RightSide
 		})
-
+		
 		local function chargesizescrolling(scrolling)
 			local nun = 0
 			local SizeY = 0
@@ -2724,13 +2529,23 @@ function Library.CreateWindow(info)
 		end
 		RightSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(RightSide))
 		LeftSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(LeftSide))
-		RightSide.ChildAdded:Connect(function()
+		RightSide.ChildAdded:Connect(function(obj)
 			RightSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(RightSide))
+			if typeof(obj) == "Frame" then
+				obj:GetPropertyChangedSignal("Size"):Connect(function()
+					RightSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(RightSide))
+				end)
+			end
 		end)
-		LeftSide.ChildAdded:Connect(function()
+		LeftSide.ChildAdded:Connect(function(obj)
 			LeftSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(LeftSide))
+			if typeof(obj) == "Frame" then
+				obj:GetPropertyChangedSignal("Size"):Connect(function()
+					LeftSide.CanvasSize = UDim2.new(0, 0, 0, chargesizescrolling(RightSide))
+				end)
+			end
 		end)
-
+		
 		function Tab:ShowTab()
 			for _, Tab in next, Window.Tabs do
 				Tab:HideTab()
@@ -2747,13 +2562,22 @@ function Library.CreateWindow(info)
 
 		function Tab:AddGroupbox(Info)
 			local Groupbox = {}
-
-			local BoxOuter = Library:Create('Frame', {
-				BackgroundColor3 = Library.BackgroundColor,
-				BorderColor3 = Library.OutlineColor,
+			
+			local block = Library:Create('Frame', {
+				BackgroundTransparency = 1,
 				Size = UDim2.new(1, 0, 0, 507),
 				ZIndex = 2,
 				Parent = Info.Side == 1 and LeftSide or RightSide
+			})
+			
+			local BoxOuter = Library:Create('Frame', {
+				AnchorPoint = Vector2.new(.5,.5),
+				Position = UDim2.new(.5, 0, .5, 0),
+				BackgroundColor3 = Library.BackgroundColor,
+				BorderColor3 = Library.OutlineColor,
+				Size = UDim2.new(.99, 0, .99, 0),
+				ZIndex = 2,
+				Parent = block
 			})
 
 			Library:AddToRegistry(BoxOuter, {
@@ -2819,7 +2643,7 @@ function Library.CreateWindow(info)
 					end;
 				end;
 
-				BoxOuter.Size = UDim2.new(1, 0, 0, 20 + Size + 2);
+				block.Size = UDim2.new(1, 0, 0, 20 + Size + 2);
 			end;
 
 			Groupbox.Container = Container;
@@ -2845,13 +2669,22 @@ function Library.CreateWindow(info)
 			local Tabbox = {
 				Tabs = {}
 			}
+			
+			local block = Library:Create('Frame', {
+				BackgroundTransparency = 1,
+				Size = UDim2.new(1, 0, 0, 0);
+				ZIndex = 2,
+				Parent = Info.Side == 1 and LeftSide or RightSide
+			})
 
 			local BoxOuter = Library:Create('Frame', {
+				AnchorPoint = Vector2.new(.5,.5),
+				Position = UDim2.new(.5, 0, .5, 0),
 				BackgroundColor3 = Library.BackgroundColor;
 				BorderColor3 = Library.OutlineColor;
-				Size = UDim2.new(1, 0, 0, 0);
+				Size = UDim2.new(.99, 0, 0, 0);
 				ZIndex = 2;
-				Parent = Info.Side == 1 and LeftSide or RightSide;
+				Parent = block
 			});
 
 			Library:AddToRegistry(BoxOuter, {
@@ -2992,8 +2825,8 @@ function Library.CreateWindow(info)
 						end;
 					end;
 
-					if BoxOuter.Size.Y.Offset < 20 + Size + 2 then
-						BoxOuter.Size = UDim2.new(1, 0, 0, 20 + Size + 2);
+					if block.Size.Y.Offset < 20 + Size + 2 then
+						block.Size = UDim2.new(1, 0, 0, 20 + Size + 2);
 					end;
 				end;
 
@@ -3055,5 +2888,507 @@ function Library.CreateWindow(info)
 
 	return Window
 end
+
+Library.ThemeManager = {} do
+	Library.ThemeManager.Folder = 'LinoriaLibSettings'
+
+	Library.ThemeManager.Library = nil
+	Library.ThemeManager.BuiltInThemes = {
+		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"40bcf3","BackgroundColor":"141414","OutlineColor":"323232"}') },
+		['Jester'] 			= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"db4467","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
+		['Mint'] 			= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"3db488","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
+		['Tokyo Night'] 	= { 4, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"191925","AccentColor":"6759b3","BackgroundColor":"16161f","OutlineColor":"323232"}') },
+	}
+
+	function Library.ThemeManager:ApplyTheme(theme)
+		local customThemeData = self:GetCustomTheme(theme)
+		local data = customThemeData or self.BuiltInThemes[theme]
+
+		if not data then return end
+
+		local scheme = data[2]
+		for idx, col in next, customThemeData or scheme do
+			self.Library[idx] = Color3.fromHex(col)
+
+			if Options[idx] then
+				Options[idx]:SetValueRGB(Color3.fromHex(col))
+			end
+		end
+
+		self:ThemeUpdate()
+	end
+
+	function Library.ThemeManager:ThemeUpdate()
+		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
+		for i, field in next, options do
+			if Options and Options[field] then
+				self.Library[field] = Options[field].Value
+			end
+		end
+
+		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);
+		self.Library:UpdateColorsUsingRegistry()
+	end
+
+	function Library.ThemeManager:LoadDefault()		
+		local theme = 'Default'
+		local content = isfile(self.Folder .. '/themes/default.txt') and readfile(self.Folder .. '/themes/default.txt')
+
+		local isDefault = true
+		if content then
+			if self.BuiltInThemes[content] then
+				theme = content
+			elseif self:GetCustomTheme(content) then
+				theme = content
+				isDefault = false;
+			end
+		elseif self.BuiltInThemes[self.DefaultTheme] then
+			theme = self.DefaultTheme
+		end
+
+		if isDefault then
+			Options.ThemeManager_ThemeList:SetValue(theme)
+		else
+			self:ApplyTheme(theme)
+		end
+	end
+
+	function Library.ThemeManager:SaveDefault(theme)
+		writefile(self.Folder .. '/themes/default.txt', theme)
+	end
+
+	function Library.ThemeManager:CreateThemeManager(groupbox)
+		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor });
+		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor });
+		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor });
+		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
+		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
+
+		local ThemesArray = {}
+		for Name, Theme in next, self.BuiltInThemes do
+			table.insert(ThemesArray, Name)
+		end
+
+		table.sort(ThemesArray, function(a, b) return self.BuiltInThemes[a][1] < self.BuiltInThemes[b][1] end)
+
+		groupbox:AddDivider()
+		groupbox:AddDropdown('ThemeManager_ThemeList', { Text = 'Theme list', Values = ThemesArray, Default = 1 })
+
+		groupbox:AddButton('Set as default', function()
+			self:SaveDefault(Options.ThemeManager_ThemeList.Value)
+			self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_ThemeList.Value))
+		end)
+
+		Options.ThemeManager_ThemeList:OnChanged(function()
+			self:ApplyTheme(Options.ThemeManager_ThemeList.Value)
+		end)
+
+		groupbox:AddDivider()
+		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 })
+		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
+
+		groupbox:AddButton('Load custom theme', function() 
+			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
+		end)
+
+		groupbox:AddButton('Save custom theme', function() 
+			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
+
+			Options.ThemeManager_CustomThemeList.Values = self:ReloadCustomThemes()
+			Options.ThemeManager_CustomThemeList:SetValues()
+			Options.ThemeManager_CustomThemeList:SetValue(nil)
+		end)
+
+		groupbox:AddButton('Refresh list', function()
+			Options.ThemeManager_CustomThemeList.Values = self:ReloadCustomThemes()
+			Options.ThemeManager_CustomThemeList:SetValues()
+			Options.ThemeManager_CustomThemeList:SetValue(nil)
+		end)
+
+		groupbox:AddButton('Set as default', function()
+			if Options.ThemeManager_CustomThemeList.Value ~= nil and Options.ThemeManager_CustomThemeList.Value ~= '' then
+				self:SaveDefault(Options.ThemeManager_CustomThemeList.Value)
+				self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_CustomThemeList.Value))
+			end
+		end)
+
+		Library.ThemeManager:LoadDefault()
+
+		local function UpdateTheme()
+			self:ThemeUpdate()
+		end
+
+		Options.BackgroundColor:OnChanged(UpdateTheme)
+		Options.MainColor:OnChanged(UpdateTheme)
+		Options.AccentColor:OnChanged(UpdateTheme)
+		Options.OutlineColor:OnChanged(UpdateTheme)
+		Options.FontColor:OnChanged(UpdateTheme)
+	end
+
+	function Library.ThemeManager:GetCustomTheme(file)
+			local path = self.Folder .. '/themes/' .. file
+			if not isfile(path) then
+				return nil
+			end
+
+			local data = readfile(path)
+			local success, decoded = pcall(httpService.JSONDecode, httpService, data)
+
+			if not success then
+				return nil
+			end
+
+			return decoded
+	end
+
+	function Library.ThemeManager:SaveCustomTheme(file)
+		if file:gsub(' ', '') == '' then
+			return self.Library:Notify('Invalid file name for theme (empty)', 3)
+		end
+
+		local theme = {}
+		local fields = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
+
+		for _, field in next, fields do
+			theme[field] = Options[field].Value:ToHex()
+		end
+
+		writefile(self.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))
+	end
+
+	function Library.ThemeManager:ReloadCustomThemes()
+		local list = listfiles(self.Folder .. '/themes')
+
+		local out = {}
+		for i = 1, #list do
+			local file = list[i]
+			if file:sub(-5) == '.json' then
+				local pos = file:find('.json', 1, true)
+				local char = file:sub(pos, pos)
+
+				while char ~= '/' and char ~= '\\' and char ~= '' do
+					pos = pos - 1
+					char = file:sub(pos, pos)
+				end
+
+				if char == '/' or char == '\\' then
+					table.insert(out, file:sub(pos + 1))
+				end
+			end
+		end
+
+		return out
+	end
+
+	function Library.ThemeManager:SetLibrary(lib)
+		self.Library = lib
+	end
+
+	function Library.ThemeManager:BuildFolderTree()
+		local paths = {}
+
+		local parts = self.Folder:split('/')
+		for idx = 1, #parts do
+			paths[#paths + 1] = table.concat(parts, '/', 1, idx)
+		end
+
+		table.insert(paths, self.Folder .. '/themes')
+		table.insert(paths, self.Folder .. '/settings')
+
+		for i = 1, #paths do
+			local str = paths[i]
+			if not isfolder(str) then
+				makefolder(str)
+			end
+		end
+	end
+
+	function Library.ThemeManager:SetFolder(folder)
+		self.Folder = folder
+		self:BuildFolderTree()
+	end
+
+	function Library.ThemeManager:CreateGroupBox(tab)
+		assert(self.Library, 'Must set ThemeManager.Library first!')
+		return tab:AddLeftGroupbox('Themes')
+	end
+
+	function Library.ThemeManager:ApplyToTab(tab)
+		assert(self.Library, 'Must set ThemeManager.Library first!')
+		local groupbox = self:CreateGroupBox(tab)
+		self:CreateThemeManager(groupbox)
+	end
+
+	function Library.ThemeManager:ApplyToGroupbox(groupbox)
+		assert(self.Library, 'Must set ThemeManager.Library first!')
+		self:CreateThemeManager(groupbox)
+	end
+
+	Library.ThemeManager:BuildFolderTree()
+end
+
+Library.SaveManager = {} do
+	Library.SaveManager.Folder = 'LinoriaLibSettings'
+	Library.SaveManager.Ignore = {}
+	Library.SaveManager.Parser = {
+		Toggle = {
+			Save = function(idx, object) 
+				return { type = 'Toggle', idx = idx, value = object.Value } 
+			end,
+			Load = function(idx, data)
+				if Toggles[idx] then 
+					Toggles[idx]:SetValue(data.value)
+				end
+			end,
+		},
+		Slider = {
+			Save = function(idx, object)
+				return { type = 'Slider', idx = idx, value = tostring(object.Value) }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValue(data.value)
+				end
+			end,
+		},
+		Dropdown = {
+			Save = function(idx, object)
+				return { type = 'Dropdown', idx = idx, value = object.Value, mutli = object.Multi }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValue(data.value)
+				end
+			end,
+		},
+		ColorPicker = {
+			Save = function(idx, object)
+				return { type = 'ColorPicker', idx = idx, value = object.Value:ToHex() }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValueRGB(Color3.fromHex(data.value))
+				end
+			end,
+		},
+		KeyPicker = {
+			Save = function(idx, object)
+				return { type = 'KeyPicker', idx = idx, mode = object.Mode, key = object.Value }
+			end,
+			Load = function(idx, data)
+				if Options[idx] then 
+					Options[idx]:SetValue({ data.key, data.mode })
+				end
+			end,
+		},
+
+		Input = {
+			Save = function(idx, object)
+				return { type = 'Input', idx = idx, text = object.Value }
+			end,
+			Load = function(idx, data)
+				if Options[idx] and type(data.text) == 'string' then
+					Options[idx]:SetValue(data.text)
+				end
+			end,
+		},
+	}
+
+	function Library.SaveManager:SetIgnoreIndexes(list)
+		for _, key in next, list do
+			self.Ignore[key] = true
+		end
+	end
+
+	function Library.SaveManager:SetFolder(folder)
+		self.Folder = folder;
+		self:BuildFolderTree()
+	end
+
+	function Library.SaveManager:Save(name)
+		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
+
+		local data = {
+			objects = {}
+		}
+
+		for idx, toggle in next, Toggles do
+			if self.Ignore[idx] then continue end
+
+			table.insert(data.objects, self.Parser[toggle.Type].Save(idx, toggle))
+		end
+
+		for idx, option in next, Options do
+			if not self.Parser[option.Type] then continue end
+			if self.Ignore[idx] then continue end
+
+			table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
+		end	
+
+		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
+		if not success then
+			return false, 'failed to encode data'
+		end
+
+		writefile(fullPath, encoded)
+		return true
+	end
+
+	function Library.SaveManager:Load(name)
+		local file = self.Folder .. '/settings/' .. name .. '.json'
+		if not isfile(file) then return false, 'invalid file' end
+
+		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
+		if not success then return false, 'decode error' end
+
+		for _, option in next, decoded.objects do
+			if self.Parser[option.type] then
+				self.Parser[option.type].Load(option.idx, option)
+			end
+		end
+
+		return true
+	end
+
+	function Library.SaveManager:IgnoreThemeSettings()
+		self:SetIgnoreIndexes({ 
+			"BackgroundColor", "MainColor", "AccentColor", "OutlineColor", "FontColor",
+			"ThemeManager_ThemeList", 'ThemeManager_CustomThemeList', 'ThemeManager_CustomThemeName',
+		})
+	end
+
+	function Library.SaveManager:BuildFolderTree()
+		local paths = {
+			self.Folder,
+			self.Folder .. '/themes',
+			self.Folder .. '/settings'
+		}
+
+		for i = 1, #paths do
+			local str = paths[i]
+			if not isfolder(str) then
+				makefolder(str)
+			end
+		end
+	end
+
+	function Library.SaveManager:RefreshConfigList()
+		local list = listfiles(self.Folder .. '/settings')
+
+		local out = {}
+		for i = 1, #list do
+			local file = list[i]
+			if file:sub(-5) == '.json' then
+
+				local pos = file:find('.json', 1, true)
+				local start = pos
+
+				local char = file:sub(pos, pos)
+				while char ~= '/' and char ~= '\\' and char ~= '' do
+					pos = pos - 1
+					char = file:sub(pos, pos)
+				end
+
+				if char == '/' or char == '\\' then
+					table.insert(out, file:sub(pos + 1, start - 1))
+				end
+			end
+		end
+
+		return out
+	end
+
+	function Library.SaveManager:SetLibrary(library)
+		self.Library = library
+	end
+
+	function Library.SaveManager:LoadAutoloadConfig()
+			if isfile(self.Folder .. '/settings/autoload.txt') then
+				local name = readfile(self.Folder .. '/settings/autoload.txt')
+
+				local success, err = self:Load(name)
+				if not success then
+					return self.Library:Notify('Failed to load autoload config: ' .. err)
+				end
+
+				self.Library:Notify(string.format('Auto loaded config %q', name))
+			end
+	end
+
+	function Library.SaveManager:BuildConfigSection(tab)
+		assert(self.Library, 'Must set SaveManager.Library')
+
+		local section = tab:AddRightGroupbox('Configuration')
+
+		section:AddDropdown('SaveManager_ConfigList', { Text = 'Config list', Values = self:RefreshConfigList(), AllowNull = true })
+		section:AddInput('SaveManager_ConfigName',    { Text = 'Config name' })
+
+		section:AddDivider()
+
+		section:AddButton('Create config', function()
+			local name = Options.SaveManager_ConfigName.Value
+
+			if name:gsub(' ', '') == '' then 
+				return self.Library:Notify('Invalid config name (empty)', 2)
+			end
+
+			local success, err = self:Save(name)
+			if not success then
+				return self.Library:Notify('Failed to save config: ' .. err)
+			end
+
+			self.Library:Notify(string.format('Created config %q', name))
+
+			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
+			Options.SaveManager_ConfigList:SetValues()
+			Options.SaveManager_ConfigList:SetValue(nil)
+		end):AddButton('Load config', function()
+			local name = Options.SaveManager_ConfigList.Value
+
+			local success, err = self:Load(name)
+			if not success then
+				return self.Library:Notify('Failed to load config: ' .. err)
+			end
+
+			self.Library:Notify(string.format('Loaded config %q', name))
+		end)
+
+		section:AddButton('Overwrite config', function()
+			local name = Options.SaveManager_ConfigList.Value
+
+			local success, err = self:Save(name)
+			if not success then
+				return self.Library:Notify('Failed to overwrite config: ' .. err)
+			end
+
+			self.Library:Notify(string.format('Overwrote config %q', name))
+		end)
+
+		section:AddButton('Autoload config', function()
+			local name = Options.SaveManager_ConfigList.Value
+			writefile(self.Folder .. '/settings/autoload.txt', name)
+			Library.SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
+			self.Library:Notify(string.format('Set %q to auto load', name))
+		end)
+
+		section:AddButton('Refresh config list', function()
+			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
+			Options.SaveManager_ConfigList:SetValues()
+			Options.SaveManager_ConfigList:SetValue(nil)
+		end)
+
+		Library.SaveManager.AutoloadLabel = section:AddLabel('Current autoload config: none', true)
+
+		if isfile(self.Folder .. '/settings/autoload.txt') then
+			local name = readfile(self.Folder .. '/settings/autoload.txt')
+			Library.SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
+		end
+
+		Library.SaveManager:SetIgnoreIndexes({ 'SaveManager_ConfigList', 'SaveManager_ConfigName' })
+	end
+
+	Library.SaveManager:BuildFolderTree()
+end
+
 
 return Library
