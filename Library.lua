@@ -2801,7 +2801,7 @@ local ThemeManager = {} do
 
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
-			self.Library[idx] = Color3.fromHex(col)
+			Library[idx] = Color3.fromHex(col)
 
 			if Options[idx] then
 				Options[idx]:SetValueRGB(Color3.fromHex(col))
@@ -2830,21 +2830,21 @@ local ThemeManager = {} do
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
 		for i, field in next, options do
 			if Options and Options[field] then
-				self.Library[field] = Options[field].Value
+				Library[field] = Options[field].Value
 			end
 		end
 
-		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);
-		self.Library:UpdateColorsUsingRegistry()
+		Library.AccentColorDark = Library:GetDarkerColor(Library.AccentColor);
+		Library:UpdateColorsUsingRegistry()
 	end
 
 	function ThemeManager:LoadDefault()		
 		local theme = 'Default'
-		local content = isfile(self.Folder .. '/themes/default.txt') and readfile(self.Folder .. '/themes/default.txt')
+		local content = isfile(Folder .. '/themes/default.txt') and readfile(self.Folder .. '/themes/default.txt')
 
 		local isDefault = true
 		if content then
-			if self.BuiltInThemes[content] then
+			if BuiltInThemes[content] then
 				theme = content
 			elseif self:GetCustomTheme(content) then
 				theme = content
@@ -2866,11 +2866,11 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:CreateThemeManager(groupbox)
-		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor });
-		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor });
-		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor });
-		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
-		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
+		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = Library.BackgroundColor });
+		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = Library.MainColor });
+		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = Library.AccentColor });
+		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = Library.OutlineColor });
+		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = Library.FontColor });
 
 		local ThemesArray = {}
 		for Name, Theme in next, self.BuiltInThemes do
@@ -2884,7 +2884,7 @@ local ThemeManager = {} do
 
 		groupbox:AddButton('Set as default', function()
 			self:SaveDefault(Options.ThemeManager_ThemeList.Value)
-			self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_ThemeList.Value))
+			Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_ThemeList.Value))
 		end)
 
 		Options.ThemeManager_ThemeList:OnChanged(function()
@@ -2916,7 +2916,7 @@ local ThemeManager = {} do
 		groupbox:AddButton('Set as default', function()
 			if Options.ThemeManager_CustomThemeList.Value ~= nil and Options.ThemeManager_CustomThemeList.Value ~= '' then
 				self:SaveDefault(Options.ThemeManager_CustomThemeList.Value)
-				self.Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_CustomThemeList.Value))
+				Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_CustomThemeList.Value))
 			end
 		end)
 
@@ -2951,7 +2951,7 @@ local ThemeManager = {} do
 
 	function ThemeManager:SaveCustomTheme(file)
 		if file:gsub(' ', '') == '' then
-			return self.Library:Notify('Invalid file name for theme (empty)', 3)
+			return Library:Notify('Invalid file name for theme (empty)', 3)
 		end
 
 		local theme = {}
@@ -3018,18 +3018,18 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:CreateGroupBox(tab)
-		assert(self.Library, 'Must set ThemeManager.Library first!')
+		assert(Library, 'Must set ThemeManager.Library first!')
 		return tab:AddLeftGroupbox('Themes')
 	end
 
 	function ThemeManager:ApplyToTab(tab)
-		assert(self.Library, 'Must set ThemeManager.Library first!')
+		assert(Library, 'Must set ThemeManager.Library first!')
 		local groupbox = self:CreateGroupBox(tab)
 		self:CreateThemeManager(groupbox)
 	end
 
 	function ThemeManager:ApplyToGroupbox(groupbox)
-		assert(self.Library, 'Must set ThemeManager.Library first!')
+		assert(Library, 'Must set ThemeManager.Library first!')
 		self:CreateThemeManager(groupbox)
 	end
 
@@ -3115,9 +3115,8 @@ local SaveManager = {} do
 	end
 
 	function SaveManager:Save(name)
-		print(name)
 		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
-		print(fullPath)
+
 		local data = {
 			objects = {}
 		}
@@ -3215,16 +3214,16 @@ local SaveManager = {} do
 
 			local success, err = self:Load(name)
 			if not success then
-				return self.Library:Notify('Failed to load autoload config: ' .. err)
+				return Library:Notify('Failed to load autoload config: ' .. err)
 			end
 
-			self.Library:Notify(string.format('Auto loaded config %q', name))
+			Library:Notify(string.format('Auto loaded config %q', name))
 		end
 	end
 
 
 	function SaveManager:BuildConfigSection(tab)
-		assert(self.Library, 'Must set SaveManager.Library')
+		assert(Library, 'Must set SaveManager.Library')
 
 		local section = tab:AddRightGroupbox('Configuration')
 
@@ -3235,17 +3234,17 @@ local SaveManager = {} do
 
 		section:AddButton('Create config', function()
 			local name = Options.SaveManager_ConfigName.Value
-
+			
 			if name:gsub(' ', '') == '' then 
-				return self.Library:Notify('Invalid config name (empty)', 2)
+				return Library:Notify('Invalid config name (empty)', 2)
 			end
 
 			local success, err = self:Save(name)
 			if not success then
-				return self.Library:Notify('Failed to save config: ' .. err)
+				return Library:Notify('Failed to save config: ' .. err)
 			end
 
-			self.Library:Notify(string.format('Created config %q', name))
+			Library:Notify(string.format('Created config %q', name))
 
 			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
 			Options.SaveManager_ConfigList:SetValues()
@@ -3255,10 +3254,10 @@ local SaveManager = {} do
 
 			local success, err = self:Load(name)
 			if not success then
-				return self.Library:Notify('Failed to load config: ' .. err)
+				return Library:Notify('Failed to load config: ' .. err)
 			end
 
-			self.Library:Notify(string.format('Loaded config %q', name))
+			Library:Notify(string.format('Loaded config %q', name))
 		end)
 
 		section:AddButton('Overwrite config', function()
@@ -3266,17 +3265,17 @@ local SaveManager = {} do
 
 			local success, err = self:Save(name)
 			if not success then
-				return self.Library:Notify('Failed to overwrite config: ' .. err)
+				return Library:Notify('Failed to overwrite config: ' .. err)
 			end
 
-			self.Library:Notify(string.format('Overwrote config %q', name))
+			Library:Notify(string.format('Overwrote config %q', name))
 		end)
 
 		section:AddButton('Autoload config', function()
 			local name = Options.SaveManager_ConfigList.Value
 			writefile(self.Folder .. '/settings/autoload.txt', name)
 			SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
-			self.Library:Notify(string.format('Set %q to auto load', name))
+			Library:Notify(string.format('Set %q to auto load', name))
 		end)
 
 		section:AddButton('Refresh config list', function()
