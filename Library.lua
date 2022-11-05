@@ -2835,8 +2835,8 @@ local ThemeManager = {} do
 				theme = content
 			elseif self:GetCustomTheme(content) then
 				theme = content
-				isDefault = false;
 			end
+			isDefault = false
 		elseif self.BuiltInThemes[self.DefaultTheme] then
 			theme = self.DefaultTheme
 		end
