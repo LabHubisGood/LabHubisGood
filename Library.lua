@@ -11,13 +11,21 @@ local Library = {}
 
 local ProtectGui = protectgui or (syn and syn.protect_gui) or (function() end)
 
-local rannun = Random.new():NextNumber(1000000,9999999)
-local oldScreenGui = CoreGui:FindFirstChild(rannun)
+local oldScreenGui = CoreGui:FindFirstChild("Library")
 if oldScreenGui then
 	oldScreenGui:Destroy()
+	if getgenv().Signals then
+		for i,v in pairs(getgenv().Signals) do
+			if typeof(v) == "boolean" then
+				v = false
+			else
+				print(typeof(v))
+			end
+		end
+	end
 end
 local ScreenGui = Instance.new('ScreenGui')
-ScreenGui.Name = tostring(rannun)
+ScreenGui.Name = "Library"
 ProtectGui(ScreenGui)
 
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Global
@@ -25,7 +33,9 @@ ScreenGui.Parent = CoreGui
 
 local Toggles = {}
 local Options = {}
+local Signals = {}
 
+getgenv().Signals = Signals
 getgenv().Toggles = Toggles
 getgenv().Options = Options
 
