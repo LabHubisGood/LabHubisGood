@@ -2840,7 +2840,7 @@ local ThemeManager = {} do
 
 	function ThemeManager:LoadDefault()		
 		local theme = 'Default'
-		local content = isfile(Folder .. '/themes/default.txt') and readfile(ThemeManager.Folder .. '/themes/default.txt')
+		local content = isfile(ThemeManager.Folder .. '/themes/default.txt') and readfile(ThemeManager.Folder .. '/themes/default.txt')
 
 		local isDefault = true
 		if content then
