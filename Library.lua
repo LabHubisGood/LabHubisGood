@@ -54,7 +54,7 @@ local Library = {
 
 function Library:AttemptSave()
 	if Library.SaveManager then
-		Library.SaveManager:Save('XeniaSettings')
+		Library.SaveManager:Save()
 	end
 end
 
@@ -2693,7 +2693,7 @@ function Library.CreateWindow(info)
 				Position = UDim2.new(.5, 0, .5, 0),
 				BackgroundColor3 = Library.BackgroundColor,
 				BorderColor3 = Library.OutlineColor,
-				Size = UDim2.new(.99, 0, 0, 0),
+				Size = UDim2.new(.99, 0, .99, 0),
 				ZIndex = 2,
 				Parent = block
 			})
@@ -2900,23 +2900,28 @@ function Library.CreateWindow(info)
 	return Window
 end
 
-Library.ThemeManager = {} do
-	Library.ThemeManager.Folder = 'XeniaSettings'
 
-	Library.ThemeManager.Library = nil
-	Library.ThemeManager.BuiltInThemes = {
+
+
+local ThemeManager = {} do
+	ThemeManager.Folder = 'XeniaSettings'
+
+	ThemeManager.Library = nil
+	ThemeManager.BuiltInThemes = {
 		['Default'] 		= { 1, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"1c1c1c","AccentColor":"40bcf3","BackgroundColor":"141414","OutlineColor":"323232"}') },
 		['Jester'] 			= { 2, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"db4467","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
 		['Mint'] 			= { 3, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"242424","AccentColor":"3db488","BackgroundColor":"1c1c1c","OutlineColor":"373737"}') },
 		['Tokyo Night'] 	= { 4, httpService:JSONDecode('{"FontColor":"ffffff","MainColor":"191925","AccentColor":"6759b3","BackgroundColor":"16161f","OutlineColor":"323232"}') },
 	}
 
-	function Library.ThemeManager:ApplyTheme(theme)
+	function ThemeManager:ApplyTheme(theme)
 		local customThemeData = self:GetCustomTheme(theme)
 		local data = customThemeData or self.BuiltInThemes[theme]
 
 		if not data then return end
-		
+
+		-- custom themes are just regular dictionaries instead of an array with { index, dictionary }
+
 		local scheme = data[2]
 		for idx, col in next, customThemeData or scheme do
 			self.Library[idx] = Color3.fromHex(col)
@@ -2935,7 +2940,6 @@ Library.ThemeManager = {} do
 							ID = 11465872108
 						end
 						Library.Icon.Image = "rbxassetid://"..ID
-
 					end
 				end
 			end
@@ -2944,7 +2948,8 @@ Library.ThemeManager = {} do
 		self:ThemeUpdate()
 	end
 
-	function Library.ThemeManager:ThemeUpdate()
+	function ThemeManager:ThemeUpdate()
+		-- This allows us to force apply themes without loading the themes tab :)
 		local options = { "FontColor", "MainColor", "AccentColor", "BackgroundColor", "OutlineColor" }
 		for i, field in next, options do
 			if Options and Options[field] then
@@ -2952,11 +2957,11 @@ Library.ThemeManager = {} do
 			end
 		end
 
-		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor)
+		self.Library.AccentColorDark = self.Library:GetDarkerColor(self.Library.AccentColor);
 		self.Library:UpdateColorsUsingRegistry()
 	end
 
-	function Library.ThemeManager:LoadDefault()		
+	function ThemeManager:LoadDefault()		
 		local theme = 'Default'
 		local content = isfile(self.Folder .. '/themes/default.txt') and readfile(self.Folder .. '/themes/default.txt')
 
@@ -2966,7 +2971,7 @@ Library.ThemeManager = {} do
 				theme = content
 			elseif self:GetCustomTheme(content) then
 				theme = content
-				isDefault = false
+				isDefault = false;
 			end
 		elseif self.BuiltInThemes[self.DefaultTheme] then
 			theme = self.DefaultTheme
@@ -2979,16 +2984,16 @@ Library.ThemeManager = {} do
 		end
 	end
 
-	function Library.ThemeManager:SaveDefault(theme)
+	function ThemeManager:SaveDefault(theme)
 		writefile(self.Folder .. '/themes/default.txt', theme)
 	end
 
-	function Library.ThemeManager:CreateThemeManager(groupbox)
-		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor })
-		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor })
-		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor })
-		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor })
-		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor })
+	function ThemeManager:CreateThemeManager(groupbox)
+		groupbox:AddLabel('Background color'):AddColorPicker('BackgroundColor', { Default = self.Library.BackgroundColor });
+		groupbox:AddLabel('Main color')	:AddColorPicker('MainColor', { Default = self.Library.MainColor });
+		groupbox:AddLabel('Accent color'):AddColorPicker('AccentColor', { Default = self.Library.AccentColor });
+		groupbox:AddLabel('Outline color'):AddColorPicker('OutlineColor', { Default = self.Library.OutlineColor });
+		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = self.Library.FontColor });
 
 		local ThemesArray = {}
 		for Name, Theme in next, self.BuiltInThemes do
@@ -3038,7 +3043,7 @@ Library.ThemeManager = {} do
 			end
 		end)
 
-		Library.ThemeManager:LoadDefault()
+		ThemeManager:LoadDefault()
 
 		local function UpdateTheme()
 			self:ThemeUpdate()
@@ -3051,7 +3056,7 @@ Library.ThemeManager = {} do
 		Options.FontColor:OnChanged(UpdateTheme)
 	end
 
-	function Library.ThemeManager:GetCustomTheme(file)
+	function ThemeManager:GetCustomTheme(file)
 		local path = self.Folder .. '/themes/' .. file
 		if not isfile(path) then
 			return nil
@@ -3067,7 +3072,7 @@ Library.ThemeManager = {} do
 		return decoded
 	end
 
-	function Library.ThemeManager:SaveCustomTheme(file)
+	function ThemeManager:SaveCustomTheme(file)
 		if file:gsub(' ', '') == '' then
 			return self.Library:Notify('Invalid file name for theme (empty)', 3)
 		end
@@ -3082,13 +3087,15 @@ Library.ThemeManager = {} do
 		writefile(self.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))
 	end
 
-	function Library.ThemeManager:ReloadCustomThemes()
+	function ThemeManager:ReloadCustomThemes()
 		local list = listfiles(self.Folder .. '/themes')
 
 		local out = {}
 		for i = 1, #list do
 			local file = list[i]
 			if file:sub(-5) == '.json' then
+				-- i hate this but it has to be done ...
+
 				local pos = file:find('.json', 1, true)
 				local char = file:sub(pos, pos)
 
@@ -3106,12 +3113,15 @@ Library.ThemeManager = {} do
 		return out
 	end
 
-	function Library.ThemeManager:SetLibrary(lib)
+	function ThemeManager:SetLibrary(lib)
 		self.Library = lib
 	end
 
-	function Library.ThemeManager:BuildFolderTree()
+	function ThemeManager:BuildFolderTree()
 		local paths = {}
+
+		-- build the entire tree if a path is like some-hub/phantom-forces
+		-- makefolder builds the entire tree on Synapse X but not other exploits
 
 		local parts = self.Folder:split('/')
 		for idx = 1, #parts do
@@ -3129,34 +3139,34 @@ Library.ThemeManager = {} do
 		end
 	end
 
-	function Library.ThemeManager:SetFolder(folder)
+	function ThemeManager:SetFolder(folder)
 		self.Folder = folder
 		self:BuildFolderTree()
 	end
 
-	function Library.ThemeManager:CreateGroupBox(tab)
+	function ThemeManager:CreateGroupBox(tab)
 		assert(self.Library, 'Must set ThemeManager.Library first!')
 		return tab:AddLeftGroupbox('Themes')
 	end
 
-	function Library.ThemeManager:ApplyToTab(tab)
+	function ThemeManager:ApplyToTab(tab)
 		assert(self.Library, 'Must set ThemeManager.Library first!')
 		local groupbox = self:CreateGroupBox(tab)
 		self:CreateThemeManager(groupbox)
 	end
 
-	function Library.ThemeManager:ApplyToGroupbox(groupbox)
+	function ThemeManager:ApplyToGroupbox(groupbox)
 		assert(self.Library, 'Must set ThemeManager.Library first!')
 		self:CreateThemeManager(groupbox)
 	end
 
-	Library.ThemeManager:BuildFolderTree()
+	ThemeManager:BuildFolderTree()
 end
 
-Library.SaveManager = {} do
-	Library.SaveManager.Folder = 'XeniaSettings'
-	Library.SaveManager.Ignore = {}
-	Library.SaveManager.Parser = {
+local SaveManager = {} do
+	SaveManager.Folder = 'XeniaSettings'
+	SaveManager.Ignore = {}
+	SaveManager.Parser = {
 		Toggle = {
 			Save = function(idx, object) 
 				return { type = 'Toggle', idx = idx, value = object.Value } 
@@ -3220,18 +3230,18 @@ Library.SaveManager = {} do
 		},
 	}
 
-	function Library.SaveManager:SetIgnoreIndexes(list)
+	function SaveManager:SetIgnoreIndexes(list)
 		for _, key in next, list do
 			self.Ignore[key] = true
 		end
 	end
 
-	function Library.SaveManager:SetFolder(folder)
-		self.Folder = folder
+	function SaveManager:SetFolder(folder)
+		self.Folder = folder;
 		self:BuildFolderTree()
 	end
 
-	function Library.SaveManager:Save(name)
+	function SaveManager:Save(name)
 		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
 
 		local data = {
@@ -3260,7 +3270,7 @@ Library.SaveManager = {} do
 		return true
 	end
 
-	function Library.SaveManager:Load(name)
+	function SaveManager:Load(name)
 		local file = self.Folder .. '/settings/' .. name .. '.json'
 		if not isfile(file) then return false, 'invalid file' end
 
@@ -3276,14 +3286,14 @@ Library.SaveManager = {} do
 		return true
 	end
 
-	function Library.SaveManager:IgnoreThemeSettings()
+	function SaveManager:IgnoreThemeSettings()
 		self:SetIgnoreIndexes({ 
-			"BackgroundColor", "MainColor", "AccentColor", "OutlineColor", "FontColor",
-			"ThemeManager_ThemeList", 'ThemeManager_CustomThemeList', 'ThemeManager_CustomThemeName',
+			"BackgroundColor", "MainColor", "AccentColor", "OutlineColor", "FontColor", -- themes
+			"ThemeManager_ThemeList", 'ThemeManager_CustomThemeList', 'ThemeManager_CustomThemeName', -- themes
 		})
 	end
 
-	function Library.SaveManager:BuildFolderTree()
+	function SaveManager:BuildFolderTree()
 		local paths = {
 			self.Folder,
 			self.Folder .. '/themes',
@@ -3298,13 +3308,14 @@ Library.SaveManager = {} do
 		end
 	end
 
-	function Library.SaveManager:RefreshConfigList()
+	function SaveManager:RefreshConfigList()
 		local list = listfiles(self.Folder .. '/settings')
 
 		local out = {}
 		for i = 1, #list do
 			local file = list[i]
 			if file:sub(-5) == '.json' then
+				-- i hate this but it has to be done ...
 
 				local pos = file:find('.json', 1, true)
 				local start = pos
@@ -3324,11 +3335,11 @@ Library.SaveManager = {} do
 		return out
 	end
 
-	function Library.SaveManager:SetLibrary(library)
+	function SaveManager:SetLibrary(library)
 		self.Library = library
 	end
 
-	function Library.SaveManager:LoadAutoloadConfig()
+	function SaveManager:LoadAutoloadConfig()
 		if isfile(self.Folder .. '/settings/autoload.txt') then
 			local name = readfile(self.Folder .. '/settings/autoload.txt')
 
@@ -3341,7 +3352,8 @@ Library.SaveManager = {} do
 		end
 	end
 
-	function Library.SaveManager:BuildConfigSection(tab)
+
+	function SaveManager:BuildConfigSection(tab)
 		assert(self.Library, 'Must set SaveManager.Library')
 
 		local section = tab:AddRightGroupbox('Configuration')
@@ -3393,7 +3405,7 @@ Library.SaveManager = {} do
 		section:AddButton('Autoload config', function()
 			local name = Options.SaveManager_ConfigList.Value
 			writefile(self.Folder .. '/settings/autoload.txt', name)
-			Library.SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
+			SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
 			self.Library:Notify(string.format('Set %q to auto load', name))
 		end)
 
@@ -3403,18 +3415,20 @@ Library.SaveManager = {} do
 			Options.SaveManager_ConfigList:SetValue(nil)
 		end)
 
-		Library.SaveManager.AutoloadLabel = section:AddLabel('Current autoload config: none', true)
+		SaveManager.AutoloadLabel = section:AddLabel('Current autoload config: none', true)
 
 		if isfile(self.Folder .. '/settings/autoload.txt') then
 			local name = readfile(self.Folder .. '/settings/autoload.txt')
-			Library.SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
+			SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
 		end
 
-		Library.SaveManager:SetIgnoreIndexes({ 'SaveManager_ConfigList', 'SaveManager_ConfigName' })
+		SaveManager:SetIgnoreIndexes({ 'SaveManager_ConfigList', 'SaveManager_ConfigName' })
 	end
 
-	Library.SaveManager:BuildFolderTree()
+	SaveManager:BuildFolderTree()
 end
 
+Library.ThemeManager = ThemeManager
+Library.SaveManager = SaveManager
 
 return Library
