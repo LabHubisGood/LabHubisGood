@@ -54,7 +54,7 @@ local Library = {
 
 function Library:AttemptSave()
 	if Library.SaveManager then
-		Library.SaveManager:Save()
+		Library.SaveManager:Save('XeniaSettings')
 	end
 end
 
