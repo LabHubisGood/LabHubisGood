@@ -2901,7 +2901,7 @@ function Library.CreateWindow(info)
 end
 
 Library.ThemeManager = {} do
-	Library.ThemeManager.Folder = 'LinoriaLibSettings'
+	Library.ThemeManager.Folder = 'XeniaSettings'
 
 	Library.ThemeManager.Library = nil
 	Library.ThemeManager.BuiltInThemes = {
