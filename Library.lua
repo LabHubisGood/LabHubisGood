@@ -2840,6 +2840,8 @@ local ThemeManager = {} do
 
 	function ThemeManager:LoadDefault()		
 		local theme = 'Default'
+		
+		print(ThemeManager.Folder)
 		local content = isfile(ThemeManager.Folder .. '/themes/default.txt') and readfile(ThemeManager.Folder .. '/themes/default.txt')
 
 		local isDefault = true
