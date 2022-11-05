@@ -2792,8 +2792,8 @@ local ThemeManager = {} do
 	}
 
 	function ThemeManager:ApplyTheme(theme)
-		local customThemeData = self:GetCustomTheme(theme)
-		local data = customThemeData or self.BuiltInThemes[theme]
+		local customThemeData = ThemeManager:GetCustomTheme(theme)
+		local data = customThemeData or ThemeManager.BuiltInThemes[theme]
 
 		if not data then return end
 
@@ -2822,7 +2822,7 @@ local ThemeManager = {} do
 			end
 		end
 
-		self:ThemeUpdate()
+		ThemeManager:ThemeUpdate()
 	end
 
 	function ThemeManager:ThemeUpdate()
@@ -2840,29 +2840,29 @@ local ThemeManager = {} do
 
 	function ThemeManager:LoadDefault()		
 		local theme = 'Default'
-		local content = isfile(Folder .. '/themes/default.txt') and readfile(self.Folder .. '/themes/default.txt')
+		local content = isfile(Folder .. '/themes/default.txt') and readfile(ThemeManager.Folder .. '/themes/default.txt')
 
 		local isDefault = true
 		if content then
 			if BuiltInThemes[content] then
 				theme = content
-			elseif self:GetCustomTheme(content) then
+			elseif ThemeManager:GetCustomTheme(content) then
 				theme = content
 				isDefault = false;
 			end
-		elseif self.BuiltInThemes[self.DefaultTheme] then
-			theme = self.DefaultTheme
+		elseif ThemeManager.BuiltInThemes[ThemeManager.DefaultTheme] then
+			theme = ThemeManager.DefaultTheme
 		end
 
 		if isDefault then
 			Options.ThemeManager_ThemeList:SetValue(theme)
 		else
-			self:ApplyTheme(theme)
+			ThemeManager:ApplyTheme(theme)
 		end
 	end
 
 	function ThemeManager:SaveDefault(theme)
-		writefile(self.Folder .. '/themes/default.txt', theme)
+		writefile(ThemeManager.Folder .. '/themes/default.txt', theme)
 	end
 
 	function ThemeManager:CreateThemeManager(groupbox)
@@ -2873,49 +2873,49 @@ local ThemeManager = {} do
 		groupbox:AddLabel('Font color')	:AddColorPicker('FontColor', { Default = Library.FontColor });
 
 		local ThemesArray = {}
-		for Name, Theme in next, self.BuiltInThemes do
+		for Name, Theme in next, ThemeManager.BuiltInThemes do
 			table.insert(ThemesArray, Name)
 		end
 
-		table.sort(ThemesArray, function(a, b) return self.BuiltInThemes[a][1] < self.BuiltInThemes[b][1] end)
+		table.sort(ThemesArray, function(a, b) return ThemeManager.BuiltInThemes[a][1] < ThemeManager.BuiltInThemes[b][1] end)
 
 		groupbox:AddDivider()
 		groupbox:AddDropdown('ThemeManager_ThemeList', { Text = 'Theme list', Values = ThemesArray, Default = 1 })
 
 		groupbox:AddButton('Set as default', function()
-			self:SaveDefault(Options.ThemeManager_ThemeList.Value)
+			ThemeManager:SaveDefault(Options.ThemeManager_ThemeList.Value)
 			Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_ThemeList.Value))
 		end)
 
 		Options.ThemeManager_ThemeList:OnChanged(function()
-			self:ApplyTheme(Options.ThemeManager_ThemeList.Value)
+			ThemeManager:ApplyTheme(Options.ThemeManager_ThemeList.Value)
 		end)
 
 		groupbox:AddDivider()
-		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = self:ReloadCustomThemes(), AllowNull = true, Default = 1 })
+		groupbox:AddDropdown('ThemeManager_CustomThemeList', { Text = 'Custom themes', Values = ThemeManager:ReloadCustomThemes(), AllowNull = true, Default = 1 })
 		groupbox:AddInput('ThemeManager_CustomThemeName', { Text = 'Custom theme name' })
 
 		groupbox:AddButton('Load custom theme', function() 
-			self:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
+			ThemeManager:ApplyTheme(Options.ThemeManager_CustomThemeList.Value) 
 		end)
 
 		groupbox:AddButton('Save custom theme', function() 
-			self:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
+			ThemeManager:SaveCustomTheme(Options.ThemeManager_CustomThemeName.Value)
 
-			Options.ThemeManager_CustomThemeList.Values = self:ReloadCustomThemes()
+			Options.ThemeManager_CustomThemeList.Values = ThemeManager:ReloadCustomThemes()
 			Options.ThemeManager_CustomThemeList:SetValues()
 			Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end)
 
 		groupbox:AddButton('Refresh list', function()
-			Options.ThemeManager_CustomThemeList.Values = self:ReloadCustomThemes()
+			Options.ThemeManager_CustomThemeList.Values = ThemeManager:ReloadCustomThemes()
 			Options.ThemeManager_CustomThemeList:SetValues()
 			Options.ThemeManager_CustomThemeList:SetValue(nil)
 		end)
 
 		groupbox:AddButton('Set as default', function()
 			if Options.ThemeManager_CustomThemeList.Value ~= nil and Options.ThemeManager_CustomThemeList.Value ~= '' then
-				self:SaveDefault(Options.ThemeManager_CustomThemeList.Value)
+				ThemeManager:SaveDefault(Options.ThemeManager_CustomThemeList.Value)
 				Library:Notify(string.format('Set default theme to %q', Options.ThemeManager_CustomThemeList.Value))
 			end
 		end)
@@ -2923,7 +2923,7 @@ local ThemeManager = {} do
 		ThemeManager:LoadDefault()
 
 		local function UpdateTheme()
-			self:ThemeUpdate()
+			ThemeManager:ThemeUpdate()
 		end
 
 		Options.BackgroundColor:OnChanged(UpdateTheme)
@@ -2934,7 +2934,7 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:GetCustomTheme(file)
-		local path = self.Folder .. '/themes/' .. file
+		local path = ThemeManager.Folder .. '/themes/' .. file
 		if not isfile(path) then
 			return nil
 		end
@@ -2961,11 +2961,11 @@ local ThemeManager = {} do
 			theme[field] = Options[field].Value:ToHex()
 		end
 
-		writefile(self.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))
+		writefile(ThemeManager.Folder .. '/themes/' .. file .. '.json', httpService:JSONEncode(theme))
 	end
 
 	function ThemeManager:ReloadCustomThemes()
-		local list = listfiles(self.Folder .. '/themes')
+		local list = listfiles(ThemeManager.Folder .. '/themes')
 
 		local out = {}
 		for i = 1, #list do
@@ -2996,13 +2996,13 @@ local ThemeManager = {} do
 		-- build the entire tree if a path is like some-hub/phantom-forces
 		-- makefolder builds the entire tree on Synapse X but not other exploits
 
-		local parts = self.Folder:split('/')
+		local parts = ThemeManager.Folder:split('/')
 		for idx = 1, #parts do
 			paths[#paths + 1] = table.concat(parts, '/', 1, idx)
 		end
 
-		table.insert(paths, self.Folder .. '/themes')
-		table.insert(paths, self.Folder .. '/settings')
+		table.insert(paths, ThemeManager.Folder .. '/themes')
+		table.insert(paths, ThemeManager.Folder .. '/settings')
 
 		for i = 1, #paths do
 			local str = paths[i]
@@ -3013,8 +3013,8 @@ local ThemeManager = {} do
 	end
 
 	function ThemeManager:SetFolder(folder)
-		self.Folder = folder
-		self:BuildFolderTree()
+		ThemeManager.Folder = folder
+		ThemeManager:BuildFolderTree()
 	end
 
 	function ThemeManager:CreateGroupBox(tab)
@@ -3024,13 +3024,13 @@ local ThemeManager = {} do
 
 	function ThemeManager:ApplyToTab(tab)
 		assert(Library, 'Must set ThemeManager.Library first!')
-		local groupbox = self:CreateGroupBox(tab)
-		self:CreateThemeManager(groupbox)
+		local groupbox = ThemeManager:CreateGroupBox(tab)
+		ThemeManager:CreateThemeManager(groupbox)
 	end
 
 	function ThemeManager:ApplyToGroupbox(groupbox)
 		assert(Library, 'Must set ThemeManager.Library first!')
-		self:CreateThemeManager(groupbox)
+		ThemeManager:CreateThemeManager(groupbox)
 	end
 
 	ThemeManager:BuildFolderTree()
@@ -3105,33 +3105,33 @@ local SaveManager = {} do
 
 	function SaveManager:SetIgnoreIndexes(list)
 		for _, key in next, list do
-			self.Ignore[key] = true
+			SaveManager.Ignore[key] = true
 		end
 	end
 
 	function SaveManager:SetFolder(folder)
-		self.Folder = folder;
-		self:BuildFolderTree()
+		SaveManager.Folder = folder;
+		SaveManager:BuildFolderTree()
 	end
 
 	function SaveManager:Save(name)
-		local fullPath = self.Folder .. '/settings/' .. name .. '.json'
+		local fullPath = SaveManager.Folder .. '/settings/' .. name .. '.json'
 
 		local data = {
 			objects = {}
 		}
 
 		for idx, toggle in next, Toggles do
-			if self.Ignore[idx] then continue end
+			if SaveManager.Ignore[idx] then continue end
 
-			table.insert(data.objects, self.Parser[toggle.Type].Save(idx, toggle))
+			table.insert(data.objects, SaveManager.Parser[toggle.Type].Save(idx, toggle))
 		end
 
 		for idx, option in next, Options do
-			if not self.Parser[option.Type] then continue end
-			if self.Ignore[idx] then continue end
+			if not SaveManager.Parser[option.Type] then continue end
+			if SaveManager.Ignore[idx] then continue end
 
-			table.insert(data.objects, self.Parser[option.Type].Save(idx, option))
+			table.insert(data.objects, SaveManager.Parser[option.Type].Save(idx, option))
 		end	
 
 		local success, encoded = pcall(httpService.JSONEncode, httpService, data)
@@ -3144,15 +3144,15 @@ local SaveManager = {} do
 	end
 
 	function SaveManager:Load(name)
-		local file = self.Folder .. '/settings/' .. name .. '.json'
+		local file = SaveManager.Folder .. '/settings/' .. name .. '.json'
 		if not isfile(file) then return false, 'invalid file' end
 
 		local success, decoded = pcall(httpService.JSONDecode, httpService, readfile(file))
 		if not success then return false, 'decode error' end
 
 		for _, option in next, decoded.objects do
-			if self.Parser[option.type] then
-				self.Parser[option.type].Load(option.idx, option)
+			if SaveManager.Parser[option.type] then
+				SaveManager.Parser[option.type].Load(option.idx, option)
 			end
 		end
 
@@ -3160,7 +3160,7 @@ local SaveManager = {} do
 	end
 
 	function SaveManager:IgnoreThemeSettings()
-		self:SetIgnoreIndexes({ 
+		SaveManager:SetIgnoreIndexes({ 
 			"BackgroundColor", "MainColor", "AccentColor", "OutlineColor", "FontColor", -- themes
 			"ThemeManager_ThemeList", 'ThemeManager_CustomThemeList', 'ThemeManager_CustomThemeName', -- themes
 		})
@@ -3168,9 +3168,9 @@ local SaveManager = {} do
 
 	function SaveManager:BuildFolderTree()
 		local paths = {
-			self.Folder,
-			self.Folder .. '/themes',
-			self.Folder .. '/settings'
+			SaveManager.Folder,
+			SaveManager.Folder .. '/themes',
+			SaveManager.Folder .. '/settings'
 		}
 
 		for i = 1, #paths do
@@ -3182,7 +3182,7 @@ local SaveManager = {} do
 	end
 
 	function SaveManager:RefreshConfigList()
-		local list = listfiles(self.Folder .. '/settings')
+		local list = listfiles(SaveManager.Folder .. '/settings')
 
 		local out = {}
 		for i = 1, #list do
@@ -3209,10 +3209,10 @@ local SaveManager = {} do
 	end
 
 	function SaveManager:LoadAutoloadConfig()
-		if isfile(self.Folder .. '/settings/autoload.txt') then
-			local name = readfile(self.Folder .. '/settings/autoload.txt')
+		if isfile(SaveManager.Folder .. '/settings/autoload.txt') then
+			local name = readfile(SaveManager.Folder .. '/settings/autoload.txt')
 
-			local success, err = self:Load(name)
+			local success, err = SaveManager:Load(name)
 			if not success then
 				return Library:Notify('Failed to load autoload config: ' .. err)
 			end
@@ -3227,7 +3227,7 @@ local SaveManager = {} do
 
 		local section = tab:AddRightGroupbox('Configuration')
 
-		section:AddDropdown('SaveManager_ConfigList', { Text = 'Config list', Values = self:RefreshConfigList(), AllowNull = true })
+		section:AddDropdown('SaveManager_ConfigList', { Text = 'Config list', Values = SaveManager:RefreshConfigList(), AllowNull = true })
 		section:AddInput('SaveManager_ConfigName',    { Text = 'Config name' })
 
 		section:AddDivider()
@@ -3239,20 +3239,20 @@ local SaveManager = {} do
 				return Library:Notify('Invalid config name (empty)', 2)
 			end
 
-			local success, err = self:Save(name)
+			local success, err = SaveManager:Save(name)
 			if not success then
 				return Library:Notify('Failed to save config: ' .. err)
 			end
 
 			Library:Notify(string.format('Created config %q', name))
 
-			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
+			Options.SaveManager_ConfigList.Values = SaveManager:RefreshConfigList()
 			Options.SaveManager_ConfigList:SetValues()
 			Options.SaveManager_ConfigList:SetValue(nil)
 		end):AddButton('Load config', function()
 			local name = Options.SaveManager_ConfigList.Value
 
-			local success, err = self:Load(name)
+			local success, err = SaveManager:Load(name)
 			if not success then
 				return Library:Notify('Failed to load config: ' .. err)
 			end
@@ -3263,7 +3263,7 @@ local SaveManager = {} do
 		section:AddButton('Overwrite config', function()
 			local name = Options.SaveManager_ConfigList.Value
 
-			local success, err = self:Save(name)
+			local success, err = SaveManager:Save(name)
 			if not success then
 				return Library:Notify('Failed to overwrite config: ' .. err)
 			end
@@ -3273,21 +3273,21 @@ local SaveManager = {} do
 
 		section:AddButton('Autoload config', function()
 			local name = Options.SaveManager_ConfigList.Value
-			writefile(self.Folder .. '/settings/autoload.txt', name)
+			writefile(SaveManager.Folder .. '/settings/autoload.txt', name)
 			SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
 			Library:Notify(string.format('Set %q to auto load', name))
 		end)
 
 		section:AddButton('Refresh config list', function()
-			Options.SaveManager_ConfigList.Values = self:RefreshConfigList()
+			Options.SaveManager_ConfigList.Values = SaveManager:RefreshConfigList()
 			Options.SaveManager_ConfigList:SetValues()
 			Options.SaveManager_ConfigList:SetValue(nil)
 		end)
 
 		SaveManager.AutoloadLabel = section:AddLabel('Current autoload config: none', true)
 
-		if isfile(self.Folder .. '/settings/autoload.txt') then
-			local name = readfile(self.Folder .. '/settings/autoload.txt')
+		if isfile(SaveManager.Folder .. '/settings/autoload.txt') then
+			local name = readfile(SaveManager.Folder .. '/settings/autoload.txt')
 			SaveManager.AutoloadLabel:SetText('Current autoload config: ' .. name)
 		end
 
