@@ -2846,6 +2846,8 @@ local ThemeManager = {} do
 
 		local isDefault = true
 		if content then
+			print(content)
+			print(ThemeManager.BuiltInThemes)
 			if ThemeManager.BuiltInThemes[content] then
 				theme = content
 			elseif ThemeManager:GetCustomTheme(content) then
