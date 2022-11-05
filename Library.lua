@@ -2359,7 +2359,7 @@ function Library.CreateWindow(info)
 		local LeftSide = Library:Create('ScrollingFrame', {
 			BackgroundTransparency = 1,
 			Position = UDim2.new(0, 8, 0, 8),
-			Size = UDim2.new(0.5, -12, 0, 470),
+			Size = UDim2.new(0.5, -12, 0, 495),
 			VerticalScrollBarInset = Enum.ScrollBarInset.Always,
 			ScrollBarThickness = 0,
 			ClipsDescendants = true,
@@ -2370,7 +2370,7 @@ function Library.CreateWindow(info)
 		local RightSide = Library:Create('ScrollingFrame', {
 			BackgroundTransparency = 1,
 			Position = UDim2.new(0.5, 4, 0, 8),
-			Size = UDim2.new(0.5, -12, 0, 470),
+			Size = UDim2.new(0.5, -12, 0, 495),
 			VerticalScrollBarInset = Enum.ScrollBarInset.Always,
 			ScrollBarThickness = 0,
 			ClipsDescendants = true,
