@@ -2025,7 +2025,7 @@ function Library.CreateWindow(info)
 		BorderSizePixel = 0,
 		AnchorPoint = Vector2.new(.5,.5),
 		Position = UDim2.new(.5, 0, .5, 0),
-		Size = UDim2.new(0, 550, 0, 600),
+		Size = UDim2.new(0, 550, 0, 625),
 		Visible = info and info.Show or false,
 		ZIndex = 1,
 		Parent = ScreenGui
