@@ -3154,7 +3154,7 @@ Library.ThemeManager = {} do
 end
 
 Library.SaveManager = {} do
-	Library.SaveManager.Folder = 'LinoriaLibSettings'
+	Library.SaveManager.Folder = 'XeniaSettings'
 	Library.SaveManager.Ignore = {}
 	Library.SaveManager.Parser = {
 		Toggle = {
@@ -3227,7 +3227,6 @@ Library.SaveManager = {} do
 	end
 
 	function Library.SaveManager:SetFolder(folder)
-		print(self.Folder)
 		self.Folder = folder
 		self:BuildFolderTree()
 	end
